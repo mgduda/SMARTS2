@@ -2,8 +2,8 @@
 
 class TestRunner:
     def __init__(self, *args, **kwargs):
-        self.testManger = TestManager()
-        self.testScheduler = TestScheduler()
+        self.manger = TestManager()
+        self.scheduler = TestScheduler()
 
     def list_all_tests(self, **kwargs):
         # List all tests
