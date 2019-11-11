@@ -1,0 +1,40 @@
+---
+##################################
+# Cheyenne Super Computer
+##################################
+
+Description:
+  Name: Cheyenne
+  Max Cores: -
+  Modules: True
+  LMOD_CMD: /glade/u/apps/ch/opt/lmod/8.1.7/lmod/lmod/libexec/lmod
+  HPC: PBS
+
+PBS_OPTIONS:
+  - A: NM00013
+  - q: regular
+  - j: oe
+
+Modsets:
+  ###############
+  # INTEL-19.0.2
+  ###############
+  INTEL-19.0.2:
+    name: intel-19.0.2
+    compiler:
+      name: intel
+      version: 19.0.2
+      module: intel
+      executables:
+        - ifort
+        - icc
+    libs:
+      - p-netcdf:
+        name: PNETCDF
+        value: /glade/work/duda/libs-intel19.0.2
+      - c-netcdf:
+        name: NETCDF
+        value: /glade/work/duda/libs-intel19.0.2
+      - pio:
+        name: PIO
+        value: /glade/work/duda/libs-intel19.0.2
