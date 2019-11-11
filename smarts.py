@@ -1,10 +1,11 @@
 """ SMARTs Command Line Runner """
 
+from __future__ import absolute_import, division, print_function
 import os
 import sys
 import argparse
-from smarts import env
-from smarts import testRunner
+from smarts.env import Environment
+from smarts.testRunner import TestRunner
 
 def list_cmd(args):
     """ Parse the list command """
@@ -41,9 +42,9 @@ def run_cmd(args):
 
 
 if __name__ == "__main__":
+    """ SMARTs Command Line Argument Parsing """
 
 
-    """ """
     parser = argparse.ArgumentParser(prog="smarts",
                                       description="A regression testing system for MPAS",
                                       epilog="Don't Panic (This is the Epilog Area)"
@@ -97,10 +98,11 @@ if __name__ == "__main__":
             print("ERROR: Please specify a valid yaml file!")
             sys.exit(-1)
     else:
-        print("We are gonna read the environment file location from the config file")
+        print("ERROR: The environment.yaml file was not specified ... Quitting!")
+        sys.exit(-1)
 
 
-    env = env.Environment(args.env[0])
+    env = Environment(args.env[0])
     if env.parse_file() == -1:
         sys.exit(-1)
 
