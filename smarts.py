@@ -9,11 +9,16 @@ from smarts.testRunner import TestRunner
 
 def list_cmd(args):
     """ Parse the list command """
+    testDir = args.dir[0] 
+
+    # TODO: Test that the directory exists here
+
+    test_handler = TestRunner(testDir)
     
     if len(args.items) == 1:
         if args.items[0] == 'tests':
             print("Listing all of the tests")
-            # test_handler.list_tests()
+            test_handler.list_tests()
             return 0
         elif args.items[0] == 'test-suites':
             print("Listing all of the test-suites")
@@ -29,7 +34,6 @@ def list_cmd(args):
         # test_handler.list_test(item)
     
     return 0
-
 
 
 def run_cmd(args):
@@ -54,6 +58,13 @@ if __name__ == "__main__":
                         dest='env',
                         help='The location of the env.yaml file',
                         metavar='env.yaml',
+                        required=True,
+                        default=None,
+                        nargs=1)
+    parser.add_argument('-d', '--dir',
+                        dest='dir',
+                        help='The location of the test directory',
+                        required=True,
                         default=None,
                         nargs=1)
     parser.add_argument('-v',
@@ -92,16 +103,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check to see if the environment file exists
-    if args.env:
-        if not os.path.isfile(args.env[0]):
-            print("ERROR: '", args.env[0], "' does not exist!")
-            print("ERROR: Please specify a valid yaml file!")
-            sys.exit(-1)
-    else:
-        print("ERROR: The environment.yaml file was not specified ... Quitting!")
-        sys.exit(-1)
-
-
     env = Environment(args.env[0])
     if env.parse_file() == -1:
         sys.exit(-1)

@@ -1,4 +1,4 @@
-class gnu_check(self):
+class gnu_check:
     test_name = "GNU Compiler Check"
     test_description = "Check to see if there is a GNU compiler is on the machine and able to be" \
                        " found by SMARTs"
