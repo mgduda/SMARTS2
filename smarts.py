@@ -39,6 +39,10 @@ def print_modsets(modsets, envName):
         print('-', mods['name'], '\t', mods['compiler']['version'])
 
 
+def print_test_info(tests):
+    pass
+
+
 def setup_smarts(envFile, testDir, srcDir):
     if not os.path.isfile(envFile):
         print("ERROR: The environment.yaml file does not exist!")
@@ -77,31 +81,30 @@ def list_cmd(args):
 
     env, test_handler = setup_smarts(envFile, testDir, srcDir)
     
-    if len(args.items) == 1:
+    if args.items[0] == 'tests':
+        valid_tests, invalid_tests = test_handler.list_tests()
+        print_tests(testDir, valid_tests, invalid_tests)
+        return 0
 
-        if args.items[0] == 'tests':
-            valid_tests, invalid_tests = test_handler.list_tests()
-            print_tests(testDir, valid_tests, invalid_tests)
-            return 0
+    elif args.items[0] == 'test':
+        print("Calling test_handler.list_test")
+        test = test_handler.list_test(args.items)
+        print_test_info(tests)
+        return 0
 
-        elif args.items[0] == 'test':
-            # Print out infromation for a single test
-            pass
+    elif args.items[0] == 'test-suites':
+        test_handler.list_testSuites()
+        return 0
 
-        elif args.items[0] == 'test-suites':
-            print("Listing all of the test-suites")
-            # test_handler.list_testSuites()
-            return 0
+    elif args.items[0] == 'modsets':
+        # List out all the avaliable modsets
+        modsets = env.list_modests()
+        print_modsets(modsets, env.name)
+        return 0
 
-        elif args.items[0] == 'modsets':
-            # List out all the avaliable modsets
-            modsets = env.list_modests()
-            print_modsets(modsets, env.name)
-            return 0
-
-        elif args.items[0] == 'modset':
-            # Print out the infromation for a single modset
-            pass
+    elif args.items[0] == 'modset':
+        # Print out the infromation for a single modset
+        pass
     
     return 0
 

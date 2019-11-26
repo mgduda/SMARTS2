@@ -5,5 +5,6 @@ class intel_check:
     nCPUs = 1
     status = None
 
-    def run(self):
-        pass
+    def run(self, env, hpc, *args, **kwargs):
+        i = 5
+        return 

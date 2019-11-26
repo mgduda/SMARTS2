@@ -9,7 +9,6 @@ class Environment:
         self.env = None
         return
 
-
     """
     TODO: Do checking of the env.yaml file:
         
@@ -30,7 +29,7 @@ class Environment:
           either a ENV_NAME AND value pair.
     """
 
-    def parse_file(self):
+    def parse_file(self, *args, **kwargs):
         if not os.path.isfile(self.envFile):
             print("ERROR: '", self.envFile, "' does not exist!")
             print("ERROR: Please specify a valid yaml file!")
@@ -45,14 +44,24 @@ class Environment:
             print("\n")
             return -1
 
-        print("Environment file read successfully!\n\n")
+        # Do some interal error checking here ... are all the main parts there?
+
+        if self.env['Description']['HPC'] != None:
+            self.hpc = self.env['Description']['HPC']
+        else:
+            self.hpc = None
+
+        self.name = self.env['Description']['Name']
+        self.ncpus = self.env['Description']['Max Cores']
+
+        print("\nEnvironment file read successfully!\n")
         return 0;
 
     def list_modests(self, name=None, *args, **kwargs):
         # If name is None, list out all modests found in the environment.yaml file,
         # else, list out the modests that contain name.
         # Returns a list
-        pass
+        return self.env['Modsets']
 
     def list_modset(self, modset, *args, **kwargs):
         # List the information of a single modest

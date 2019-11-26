@@ -2,7 +2,11 @@
 import os
 import string
 import sys
+from multiprocessing import Process
 from importlib import import_module
+import datetime
+
+NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
 # from smarts import HPC
 # import environment
@@ -18,11 +22,11 @@ class TestRunner:
 
         # Based on if the env we have is an HPC or not, initalize the HPC
         if env.hpc == True:
-           # Initalize HPC
+            # Initalize HPC
+            raise NotImplementedError("HPC COMPATABLITY IS NOT YET IMPLEMENTED")
             pass
         else:
-           # HPC = None
-            pass
+            self.hpc = None
 
         # At a Python's program startup, sys.path is set to PYTHONPATH (and not 
         # the normal PATH variable). Similar to the PATH environment, it is the locations
@@ -34,7 +38,7 @@ class TestRunner:
         sys.path.insert(0, self.directory)
 
         self.manager = TestManager(self.directory)
-        self.scheduler = TestScheduler()
+        self.scheduler = TestScheduler(self)
 
     def list_tests(self, *args, **kwargs):
         # List all tests
@@ -42,7 +46,8 @@ class TestRunner:
 
     def list_test(self, tests, *args, **kwargs):
         # List a single test
-        pass
+        print("List test!")
+        return self.manager.list_test(tests)
 
     def run_tests(self, tests, env, *args, **kwargs):
         # For each test:
@@ -53,17 +58,19 @@ class TestRunner:
         # Check to see if the requested tests are avaliable on this sytem.
         # If they are, also check to see if the maximum CPU's are not over
         # the environments ammount
-        for test in tests:
-            # TODO: Might be worthwhile to try to find as many tests as possible and then return
-            # the all the test names that were not found
-            if self.manager.list_test(test) == None:
-                print("The test", test, "could not be found!")
-                return "The test "+test+" could not be found!"
-
+#        for test in tests:
+#            # TODO: Might be worthwhile to try to find as many tests as possible and then return
+#            # the all the test names that were not found
+#            if self.manager.list_test(test) == None:
+#                print("The test", test, "could not be found!")
+#                return "The test "+test+" could not be found!"
+#
         
         # Create the subdirectory of this regression test run and then move the cwd
         # into that test directory`
-        pass
+
+        # Run the tests
+        self.scheduler.run_tests(tests)
 
 
 class TestManager:
@@ -103,23 +110,97 @@ class TestManager:
 
     def list_test_suites(self, **kwargs):
         # List all of the available test-suites
-        pass
+        raise NotImplementedError("TestManager.list_test_suites "+NOT_IMPLEMENTED_ERROR)
 
-    def list_test(self, name, **kwargs):
+    def list_test(self, tests, **kwargs):
         # Return the information about a single test or test-suite as a (dictionary or object?)
+        raise NotImplementedError("TestManager.list_test "+NOT_IMPLEMENTED_ERROR)
 
-
-        pass
-
-    def check_test(self, name, **kwargs):
+    def check_test(self, test, **kwargs):
         # Check to see if the test suite and test name are on the system
-        pass
+        raise NotImplementedError("TestManager.check_test"+NOT_IMPLEMENTED_ERROR)
+
+class testSubProcess(Process):
+    def __init__(self, test_launch_name, test, env, hpc, *args, **kwargs):
+        Process.__init__(self)
+        self.test = test
+        self.test_launch_name = test_launch_name
+        self.env = env
+        self.hpc = hpc
+        self.args = args
+        self.kwargs = kwargs
+        
+        self.status = "Initialized"
+    
+    def run(self):
+        print("DEBUG: Creating directory for:", self.test_launch_name)
+        os.mkdir(self.test_launch_name)
+
+        if not os.path.isdir(self.test_launch_name):
+            print("ERROR: Can not find directory: ", self.test_launch_name)
+            sys.exit(-1)
+
+        os.chdir(self.test_launch_name)
+        self.status = "Running"
+        self.test.run(self.env, self.hpc, self.args, self.kwargs)
+        self.status = "Finished"
+        return
 
 
 class TestScheduler:
-    def __init__(self, *args, **kwargs):
-        pass
 
-    def run_tests(self, tests, **kwargs):
-        # Run all the test or suite-tests in tests
+    def __init__(self, testrunner, *args, **kwargs):
+        self.env = testrunner.env
+        self.ncpus = testrunner.env.ncpus
+
+    def _setup_tests(): # Possible function to set up test to take stuff out of run tests
         pass
+       
+    def _create_run_directory(self):
+        # If all tests are able to be ran, then create the test directory
+        # smarts.year-mm-dd_hh.mm.ss
+        run_directory = 'run-smarts-'
+        now = datetime.datetime.now()
+        run_directory += now.strftime('%Y-%m-%d-%H.%M.%S')
+        print("DEBUG: Creating directory: ", run_directory)
+        os.mkdir(run_directory)
+        if not os.path.isdir(run_directory):
+            print("ERROR: Could not create run_directory: ", run_directory)
+            return False
+
+        return run_directory
+
+    def run_tests(self, tests, *args, **kwargs):
+        # Pass in the test names? Or test objects?
+        num_tests = len(tests)
+        avaliable_cpus = self.ncpus
+        self.hpc = None
+        
+
+        # Import and then initalize each test as a Python Subprocess
+        loaded_tests = []
+        for test_launch_name in tests:
+            module = import_module(test_launch_name+'.'+test_launch_name)
+            test = getattr(module, test_launch_name) # get the test from the module
+            test = test() # Initialize the test
+            print(test.test_name, "is scheduled to run!")
+            loaded_tests.append(testSubProcess(test_launch_name, test, self.env, self.hpc))
+
+        self.run_directory = self._create_run_directory()
+
+        if not self.run_directory:
+            print("ERROR: There was a problem creating the run directory!")
+            sys.exit(-1)
+
+        os.chdir(self.run_directory)
+
+        ###
+        # Run Tests
+        ### 
+        for test in loaded_tests:
+            print("\nStarting test ", test.test.test_name)
+            test.start()
+            print(test.test.test_name, "has started\n")
+
+        # raise NotImplementedError("TestManager.run_tests "+NOT_IMPLEMENTED_ERROR)
+
