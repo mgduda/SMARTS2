@@ -70,7 +70,16 @@ class Environment:
         # If name is None, list out all modests found in the environment.yaml file,
         # else, list out the modests that contain name.
         # Returns a list
-        return self.env['Modsets']
+        if name is None:
+            modsets = self.env['Modsets']
+        else:
+            modsets = []
+            for modset in self.env['Modsets']:
+                if name in list(modset.keys())[0]:
+                    modsets.append(modset)
+
+        return modsets
+
 
     def list_modset(self, modset, *args, **kwargs):
         # List the information of a single modest
@@ -84,7 +93,7 @@ class Environment:
 
     def _load_compiler(self, compiler, *args, **kwargs):
         # Internal function to load a compiler on a modset
-        print("DEBUG: In Environment._load_compiler(...)")
+        # print("DEBUG: In Environment._load_compiler(...)")
 
         name    = compiler['name']
         version = compiler['version']
@@ -93,15 +102,14 @@ class Environment:
         # If LMOD Support enabled:
             # lmod_cmd = self.lmod_cmd
 
-        print("DEBUG: Loading compiler: ", name, version)
+        # print("DEBUG: Loading compiler: ", name, version)
 
         if 'module' in compiler.keys():
-            print("This is a module!")
             compiler_module = compiler['module']
             if self.lmod_supported:
                 # Infromation about how the `lmod python` command is translated into python
                 load_compiler_lmod_cmd = str(self.lmod_cmd)+' python load '+compiler_module+'/'+version
-                print("DEBUG: Load compiler command:\n > ", load_compiler_lmod_cmd)
+                # print("DEBUG: Load compiler command:\n > ", load_compiler_lmod_cmd)
                 module_load = subprocess.Popen(load_compiler_lmod_cmd,
                                                shell=True, # TODO: Exploration around shell=True
                                                stdout=subprocess.PIPE,
@@ -114,10 +122,9 @@ class Environment:
                 return False
 
         elif 'path' in compiler.keys():
-            print("This is a path!")
             os.environ['PATH'] = compiler['path']+'/bin/'+':'+os.environ['PATH']
         else:
-            print("We don't know the method used to load this compiler!")
+            print("ERROR: We don't know the method used to load this compiler!")
             sys.exit(-1)
 
 
@@ -136,7 +143,7 @@ class Environment:
                 print(stderr)
                 return False
 
-        print("Loaded compiler: ", name, "/", version, " succesfully!", sep='')
+        # print("Loaded compiler: ", name, "/", version, " succesfully!", sep='')
 
         return True
 
@@ -145,15 +152,14 @@ class Environment:
         pass
 
     def load_modset(self, modset, *args, **kawrgs):
-        print("DEBUG: In Environment.load_modset(...)")
+        # print("DEBUG: In Environment.load_modset(...)")
     
         # Load a modset
         compiler = modset['compiler']
 
-
-        print("DEBUG: Requested modset is: ", modset)
-        print("DEBUG: Compiler is: ", compiler)
-        print("DEBUG: Compiler name: ", compiler['name'])
+        # print("DEBUG: Requested modset is: ", modset)
+        # print("DEBUG: Compiler is: ", compiler)
+        # print("DEBUG: Compiler name: ", compiler['name'])
 
         if not self._load_compiler(compiler):
             print("ERROR: There was an error loading the modset! ", modset)
