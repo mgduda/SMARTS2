@@ -2,6 +2,8 @@
 
 import os
 import yaml
+import sys
+import subprocess
 
 class Environment:
     def __init__(self, envFile, *args, **kwargs):
@@ -54,10 +56,17 @@ class Environment:
         self.name = self.env['Description']['Name']
         self.ncpus = self.env['Description']['Max Cores']
 
+        # See if the lmod command is supported
+        if self.env['Description']['Modules']:
+            self.lmod_supported = True
+            self.lmod_cmd = self.env['Description']['LMOD_CMD']
+        else:
+            self.lmod_supported = False
+
         print("\nEnvironment file read successfully!\n")
         return 0;
 
-    def list_modests(self, name=None, *args, **kwargs):
+    def list_modsets(self, name=None, *args, **kwargs):
         # If name is None, list out all modests found in the environment.yaml file,
         # else, list out the modests that contain name.
         # Returns a list
@@ -73,15 +82,87 @@ class Environment:
         # Returns a list
         pass
 
-    def _load_compiler(self, compiler, executables, *args, **kwargs):
+    def _load_compiler(self, compiler, *args, **kwargs):
         # Internal function to load a compiler on a modset
-        pass
+        print("DEBUG: In Environment._load_compiler(...)")
+
+        name    = compiler['name']
+        version = compiler['version']
+        cmds    = compiler['executables']
+
+        # If LMOD Support enabled:
+            # lmod_cmd = self.lmod_cmd
+
+        print("DEBUG: Loading compiler: ", name, version)
+
+        if 'module' in compiler.keys():
+            print("This is a module!")
+            compiler_module = compiler['module']
+            if self.lmod_supported:
+                # Infromation about how the `lmod python` command is translated into python
+                load_compiler_lmod_cmd = str(self.lmod_cmd)+' python load '+compiler_module+'/'+version
+                print("DEBUG: Load compiler command:\n > ", load_compiler_lmod_cmd)
+                module_load = subprocess.Popen(load_compiler_lmod_cmd,
+                                               shell=True, # TODO: Exploration around shell=True
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
+                # Information on what exec does
+                exec (module_load.stdout.read())
+            else:
+                print("Lmod is not supported on this system, no lmod_cmd was given or modules=true"
+                      " was not")
+                return False
+
+        elif 'path' in compiler.keys():
+            print("This is a path!")
+            os.environ['PATH'] = compiler['path']+'/bin/'+':'+os.environ['PATH']
+        else:
+            print("We don't know the method used to load this compiler!")
+            sys.exit(-1)
+
+
+        # Test the compiler to see if we have the right version loaded
+        for cmd in cmds:
+            check = subprocess.Popen(cmd+' --version', shell=True,
+                                                       stdout=subprocess.PIPE,
+                                                       stderr=subprocess.PIPE)
+            stdout = str(check.stdout.read(), encoding='utf-8')
+            stderr = str(check.stderr.read(), encoding='utf-8')
+
+            if version not in stdout:
+                print(version, " was not succesfully loaded for the command ", cmd)
+                print("Instead got: ")
+                print(stdout)
+                print(stderr)
+                return False
+
+        print("Loaded compiler: ", name, "/", version, " succesfully!", sep='')
+
+        return True
 
     def _load_library(self, library, *args, **kwargs):
         # Internal function to load a library based on the modset lib
         pass
 
-    def load_modest(self, modset, *args, **kawrgs):
+    def load_modset(self, modset, *args, **kawrgs):
+        print("DEBUG: In Environment.load_modset(...)")
+    
         # Load a modset
-        pass
+        compiler = modset['compiler']
 
+
+        print("DEBUG: Requested modset is: ", modset)
+        print("DEBUG: Compiler is: ", compiler)
+        print("DEBUG: Compiler name: ", compiler['name'])
+
+        if not self._load_compiler(compiler):
+            print("ERROR: There was an error loading the modset! ", modset)
+            sys.exit(-1)
+
+        # for library in modset['libraries']:
+        #   if not _load_library(library):
+        #       print("ERROR: There was an error loading this library! ", library)
+        #       sys.exit(-1)
+
+
+        return True
