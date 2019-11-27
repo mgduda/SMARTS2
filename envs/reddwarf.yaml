@@ -7,7 +7,7 @@
 
 Description:
   Name: Reddwarf
-  Max Cores: 12
+  Max Cores: 1
   Modules: True
   LMOD_CMD: /usr/local/lmod/lmod/libexec/lmod
   HPC: False
@@ -17,7 +17,7 @@ Modsets:
   ############
   # GNU-9.1.0
   ############
-  GNU-9.1.0:
+  - GNU-9.1.0:
     name: gnu-9.1.0
     compiler:
       name: gnu
@@ -27,6 +27,13 @@ Modsets:
         - gcc
         - gfortran
         - g++
+      MPI_PATH: /sysdisk2/mcurry/build-gcc-9.1.0/mpich-3.3.1
+      mpi_executables:
+        - mpicc
+        - mpif90
+        - mpifort
+        - mipexec
+        - mpirun
     libs:
       - p-netcdf:
         ENV-NAME: PNETCDF
@@ -44,7 +51,7 @@ Modsets:
   ############
   # GNU-8.3.0
   ############
-  GNU-8.3.0:
+  - GNU-8.3.0:
     name: gnu-8.3.0
     compiler:
       name: gnu
@@ -68,7 +75,7 @@ Modsets:
   ###############
   # INTEL-19.0.2
   ###############
-  INTEL-19.0.2:
+  - INTEL-19.0.2:
     name: intel-19.0.2
     compiler:
       name: intel
