@@ -10,7 +10,8 @@ from smarts.testRunner import TestRunner
 
 
 def print_tests(test_directory, valid_tests, invalid_tests):
-    # Print the list of valid and invalid lists to the tests
+    # SMARTS Command Line API print tests function - Print the list of valid 
+    # and invalid lists to the tests
     print("Tests found in: ", test_directory, ":", sep='')
 
     if len(valid_tests) > 0:
@@ -34,16 +35,24 @@ def print_tests(test_directory, valid_tests, invalid_tests):
     return 0
 
 def print_modsets(modsets, envName):
+    # SMARTS Command Line API print modset function - Print the list of modsets
+    # found in the enviornment.yaml file
     print("Avaliable Modsets on:", envName)
     for mods in modsets:
         print('-', mods['name'], '\t', mods['compiler']['version'])
 
 
 def print_test_info(tests):
+    # SMARTS Command Line API print test info - Print the infromation of
+    # a specific tests
     pass
 
 
 def setup_smarts(envFile, testDir, srcDir):
+    # Helper function to Initalize SMARTs classes, specifically the
+    # TestRunner, and the Environment class. If any of the files specified above
+    # do not exists or can't be found, the program will fail
+
     if not os.path.isfile(envFile):
         print("ERROR: The environment.yaml file does not exist!")
         print("ERROR: Was it specified correctly?")
@@ -68,9 +77,13 @@ def setup_smarts(envFile, testDir, srcDir):
 
 
 def list_cmd(args):
-    """ Parse the list command """
+    # SMARTS Command Line API for listing out tests, test-suites, modsets, 
+    # and test infromation
+
+    # TODO: For listing tests or modsets, we don't need the src dir, so make it optional here
+
     testDir = args.dir[0] 
-    testDir = os.path.abspath(testDir)
+    testDir = os.path.abspath(testDir) # Convert relative path into an absolute path
     srcDir = args.src[0]
     srcDir = os.path.abspath(srcDir)
     envFile = args.env[0]
@@ -80,31 +93,31 @@ def list_cmd(args):
     #print("ENV FILE: ", envFile)
 
     env, test_handler = setup_smarts(envFile, testDir, srcDir)
-    
-    if args.items[0] == 'tests':
-        valid_tests, invalid_tests = test_handler.list_tests()
-        print_tests(testDir, valid_tests, invalid_tests)
-        return 0
 
-    elif args.items[0] == 'test':
-        print("Calling test_handler.list_test")
-        test = test_handler.list_test(args.items)
-        print_test_info(tests)
-        return 0
-
-    elif args.items[0] == 'test-suites':
-        test_handler.list_testSuites()
-        return 0
-
-    elif args.items[0] == 'modsets':
-        # List out all the avaliable modsets
-        modsets = env.list_modests()
-        print_modsets(modsets, env.name)
-        return 0
-
-    elif args.items[0] == 'modset':
-        # Print out the infromation for a single modset
-        pass
+    if len(args.items) == 1:
+        # TODO: Handle ambigous arguments with this command
+        if args.items[0] == 'tests':
+            valid_tests, invalid_tests = test_handler.list_tests()
+            print_tests(testDir, valid_tests, invalid_tests)
+            return 0
+        elif args.items[0] == 'test-suites':
+            test_handler.list_testSuites()
+            return 0
+        elif args.items[0] == 'modsets':
+            # List out all the avaliable modsets
+            modsets = env.list_modsets()
+            print_modsets(modsets, env.name)
+            return 0
+    if len(args.items) > 1:
+        # Print infromation of a specific item, either tests or modsets
+        if args.items[0] == 'test':
+            print("Calling test_handler.list_test")
+            test = test_handler.list_test(args.items)
+            print_test_info(tests)
+            return 0
+        elif args.items[0] == 'modset':
+            # Print out the infromation for a single modset
+            pass
     
     return 0
 
@@ -132,21 +145,23 @@ if __name__ == "__main__":
                                       epilog="Don't Panic (This is the Epilog Area)"
                                     )
 
-    parser.add_argument('-e', '--env',
+    parser.add_argument('-e', '--env-file',
                         dest='env',
                         help='The location of the env.yaml file',
                         metavar='env.yaml',
                         required=True,
                         default=None,
                         nargs=1)
-    parser.add_argument('-s', '--src',
+    # TODO: We don't need the src dir for specified calls, so make it optional. But we will need to
+    # do some of our own coding to make it required in some areas
+    parser.add_argument('-s', '--src-dir',
                         dest='src',
                         help='The directory that holds the code to test changes (MPAS-Model)',
                         metavar='dir',
                         required=True,
                         default=None,
                         nargs=1)
-    parser.add_argument('-d', '--dir',
+    parser.add_argument('-t', '--test-dir',
                         dest='dir',
                         help='The location of the test directory',
                         metavar='dir',
@@ -168,6 +183,7 @@ if __name__ == "__main__":
                                        help='Sub-command help message')
 
     # List subcommand
+    # TODO: Rename parserList to listParser
     parserList = subparsers.add_parser('list',
                                        help="List SMART's tests, test suites and compilers",
                                        description='Description for list sub-command',
@@ -178,6 +194,7 @@ if __name__ == "__main__":
     parserList.set_defaults(func=list_cmd)
 
     # Run subcommand
+    # TODO: Rename parserRun to runParser
     parserRun = subparsers.add_parser('run',
                                      help="Run a test or a test-suite by name",
                                      description='Description for run sub-command',
@@ -189,5 +206,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Check to see if the environment file exists
+    # In conjuction with the .set_defaults(func=x) command, for both the parserList,
+    # and parserRun, the argparser will call the function x, depending on what command
+    # was passed in to the argparser.
     args.func(args)
