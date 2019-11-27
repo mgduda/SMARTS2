@@ -48,7 +48,7 @@ def print_test_info(tests):
     pass
 
 
-def setup_smarts(envFile, testDir, srcDir):
+def setup_smarts(envFile=None, testDir=None, srcDir=None):
     # Helper function to Initalize SMARTs classes, specifically the
     # TestRunner, and the Environment class. If any of the files specified above
     # do not exists or can't be found, the program will fail
@@ -63,11 +63,12 @@ def setup_smarts(envFile, testDir, srcDir):
         print("ERROR: Was it specified correctly?")
         print("ERROR: ", testDir)
         sys.exit(-1)
-    if not os.path.isdir(srcDir):
-        print("ERROR: The source directory does not exist!")
-        print("ERROR: Was it specified correctly?")
-        print("ERROR: ", srcDir)
-        sys.exit(-1)
+    if srcDir:
+        if not os.path.isdir(srcDir):
+            print("ERROR: The source directory does not exist!")
+            print("ERROR: Was it specified correctly?")
+            print("ERROR: ", srcDir)
+            sys.exit(-1)
 
     env = Environment(envFile)
     env.parse_file()  # TODO: Handle/report env.yaml file parsing errors here
@@ -84,15 +85,13 @@ def list_cmd(args):
 
     testDir = args.dir[0] 
     testDir = os.path.abspath(testDir) # Convert relative path into an absolute path
-    srcDir = args.src[0]
-    srcDir = os.path.abspath(srcDir)
     envFile = args.env[0]
     envFile = os.path.abspath(envFile)
     
     #print("TEST DIR: ", testDir)
     #print("ENV FILE: ", envFile)
 
-    env, test_handler = setup_smarts(envFile, testDir, srcDir)
+    env, test_handler = setup_smarts(envFile, testDir)
 
     if len(args.items) == 1:
         # TODO: Handle ambigous arguments with this command
@@ -158,7 +157,7 @@ if __name__ == "__main__":
                         dest='src',
                         help='The directory that holds the code to test changes (MPAS-Model)',
                         metavar='dir',
-                        required=True,
+                        required=False,
                         default=None,
                         nargs=1)
     parser.add_argument('-t', '--test-dir',
@@ -205,6 +204,13 @@ if __name__ == "__main__":
     parserRun.set_defaults(func=run_cmd)
 
     args = parser.parse_args()
+
+    # TODO: Also do this for the following:
+    # list tests - Only need the test directory
+    # list modsets - Only need the environment file
+    if args.command == 'run' and args.src is None:
+        print("ERROR: Please provide a src directory when using the `run` command")
+        sys.exit(-1)
 
     # In conjuction with the .set_defaults(func=x) command, for both the parserList,
     # and parserRun, the argparser will call the function x, depending on what command
