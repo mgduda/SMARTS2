@@ -11,6 +11,32 @@ NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 # from smarts import HPC
 # import environment
 
+class TestSubProcess(Process):
+    """ Wrapper around tests which will enable them to be launched as subprocsses """
+    def __init__(self, test_launch_name, test, env, hpc, *args, **kwargs):
+        Process.__init__(self)
+        self.test = test
+        self.test_launch_name = test_launch_name
+        self.env = env
+        self.hpc = hpc
+        self.args = args
+        self.kwargs = kwargs
+        self.status = "Initialized"
+    
+    def run(self):
+        print("DEBUG: Creating directory for:", self.test_launch_name)
+        os.mkdir(self.test_launch_name)
+
+        if not os.path.isdir(self.test_launch_name):
+            print("ERROR: Can not find directory: ", self.test_launch_name)
+            sys.exit(-1)
+
+        os.chdir(self.test_launch_name)
+        self.status = "Running"
+        self.test.run(self.env, self.hpc, self.args, self.kwargs)
+        self.status = "Finished"
+        return
+
 class TestRunner:
     def __init__(self, test_directory, env, src, *args, **kwargs):
         # The test directory is the directory that holds each test's implementation , not where
@@ -120,33 +146,6 @@ class TestManager:
         # Check to see if the test suite and test name are on the system
         raise NotImplementedError("TestManager.check_test"+NOT_IMPLEMENTED_ERROR)
 
-class testSubProcess(Process):
-    def __init__(self, test_launch_name, test, env, hpc, *args, **kwargs):
-        Process.__init__(self)
-        self.test = test
-        self.test_launch_name = test_launch_name
-        self.env = env
-        self.hpc = hpc
-        self.args = args
-        self.kwargs = kwargs
-        
-        self.status = "Initialized"
-    
-    def run(self):
-        print("DEBUG: Creating directory for:", self.test_launch_name)
-        os.mkdir(self.test_launch_name)
-
-        if not os.path.isdir(self.test_launch_name):
-            print("ERROR: Can not find directory: ", self.test_launch_name)
-            sys.exit(-1)
-
-        os.chdir(self.test_launch_name)
-        self.status = "Running"
-        self.test.run(self.env, self.hpc, self.args, self.kwargs)
-        self.status = "Finished"
-        return
-
-
 class TestScheduler:
 
     def __init__(self, testrunner, *args, **kwargs):
@@ -162,7 +161,7 @@ class TestScheduler:
         run_directory = 'run-smarts-'
         now = datetime.datetime.now()
         run_directory += now.strftime('%Y-%m-%d-%H.%M.%S')
-        print("DEBUG: Creating directory: ", run_directory)
+        # print("DEBUG: Creating directory: ", run_directory)
         os.mkdir(run_directory)
         if not os.path.isdir(run_directory):
             print("ERROR: Could not create run_directory: ", run_directory)
@@ -173,6 +172,7 @@ class TestScheduler:
     def run_tests(self, tests, *args, **kwargs):
         # Pass in the test names? Or test objects?
         num_tests = len(tests)
+        finished = 0
         avaliable_cpus = self.ncpus
         self.hpc = None
         
@@ -180,12 +180,19 @@ class TestScheduler:
         # Import and then initalize each test as a Python Subprocess
         loaded_tests = []
         for test_launch_name in tests:
+            """ Import each test as a module. """
             module = import_module(test_launch_name+'.'+test_launch_name)
             test = getattr(module, test_launch_name) # get the test from the module
             test = test() # Initialize the test
             print(test.test_name, "is scheduled to run!")
-            loaded_tests.append(testSubProcess(test_launch_name, test, self.env, self.hpc))
+            """ Wrap our test class inside our extended multiprocessing.Process object. When we
+            initalize this wrapper we will need to pass in any arguments that will need to have
+            passed to the test, because we cannot overload the Process.start() function. """
+            testProcess = TestSubProcess(test_launch_name, test, self.env, self.hpc)
+            loaded_tests.append(testProcess)
 
+        # Create the run directory that will hold each test. Each test will be ran within their own
+        # directories within this directory.
         self.run_directory = self._create_run_directory()
 
         if not self.run_directory:
@@ -194,13 +201,32 @@ class TestScheduler:
 
         os.chdir(self.run_directory)
 
-        ###
-        # Run Tests
-        ### 
-        for test in loaded_tests:
-            print("\nStarting test ", test.test.test_name)
-            test.start()
-            print(test.test.test_name, "has started\n")
 
-        # raise NotImplementedError("TestManager.run_tests "+NOT_IMPLEMENTED_ERROR)
+        ################
+        # Test Scheduler - TODO: Maybe have this in a new function TestScheduler.scheduler(..) ?
+        ################
+        while ( finished != num_tests):
+           # print("Number of finished tests:", finished)
+           # print("Number of total tests:", num_tests)
 
+            if avaliable_cpus > 0:
+                for test in loaded_tests:
+                    if ( test.test.nCPUs <= avaliable_cpus and not test.is_alive()
+                                                           and test.exitcode is None):
+                        avaliable_cpus -= test.test.nCPUs
+                        test.start()
+                        print(test.test.test_name, "has started!\n")
+
+            # Join tests
+            for test in loaded_tests:
+                #print("Joing test: ", test.exitcode, test.is_alive(), test.status)
+                if (test.exitcode is not None and not test.is_alive() 
+                                              and test.status != "Joined"):
+                    test.join(.2) # Wait for .2 seconds for the test to join
+                    test.status = "Joined"
+                    print("Joined with ", test.test.test_name, "this test: ", 
+                                          test.test.status, "\texit: ", test.exitcode)
+                    avaliable_cpus += test.test.nCPUs
+                    finished += 1
+
+        return
