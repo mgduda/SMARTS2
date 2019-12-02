@@ -7,7 +7,7 @@ class gnu_check:
     nCPUs = 1
     status = None
 
-    def run(self, env, hpc, *args, **kwargs):
+    def run(self, env, src_dir, test_dir, hpc=None, *args, **kwargs):
         # Load GNU Compilers
         gnu_compilers = env.list_modsets(name="GNU")
         for versions in gnu_compilers:

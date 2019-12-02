@@ -13,10 +13,17 @@ NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
 class TestSubProcess(Process):
     """ Wrapper around tests which will enable them to be launched as subprocsses """
-    def __init__(self, test_launch_name, test, env, hpc, *args, **kwargs):
+    def __init__(self, test_launch_name, test,
+                                         env,
+                                         srcDir,
+                                         testDir,
+                                         hpc,
+                                         *args, **kwargs):
         Process.__init__(self)
         self.test = test
         self.test_launch_name = test_launch_name
+        self.srcDir = srcDir
+        self.testDir = testDir
         self.env = env
         self.hpc = hpc
         self.args = args
@@ -33,17 +40,17 @@ class TestSubProcess(Process):
 
         os.chdir(self.test_launch_name)
         self.status = "Running"
-        self.test.run(self.env, self.hpc, self.args, self.kwargs)
+        self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc, *self.args, **self.kwargs)
         self.status = "Finished"
         return
 
 class TestRunner:
-    def __init__(self, test_directory, env, src, *args, **kwargs):
+    def __init__(self, env, testDir, srcDir, *args, **kwargs):
         # The test directory is the directory that holds each test's implementation , not where
         # they are ran.
-        self.directory = test_directory
         self.env = env
-        self.src = src
+        self.testDir= testDir
+        self.srcDir = srcDir
         _debug_ = 0
 
         # Based on if the env we have is an HPC or not, initalize the HPC
@@ -59,12 +66,12 @@ class TestRunner:
         # Python will search for importing Python modules.
         # To find the user created tests, append it to the front.
         if _debug_ > 0:
-            print("TestRunner: Test directory is: ", self.directory)
+            print("TestRunner: Test directory is: ", self.testDir)
 
-        sys.path.insert(0, self.directory)
+        sys.path.insert(0, self.testDir)
 
-        self.manager = TestManager(self.directory)
-        self.scheduler = TestScheduler(self)
+        self.manager = TestManager(self.testDir)
+        self.scheduler = TestScheduler(self, self.testDir, self.srcDir, *args, **kwargs)
 
     def list_tests(self, *args, **kwargs):
         # List all tests
@@ -148,9 +155,13 @@ class TestManager:
 
 class TestScheduler:
 
-    def __init__(self, testrunner, *args, **kwargs):
-        self.env = testrunner.env
-        self.ncpus = testrunner.env.ncpus
+    def __init__(self, testRunner, testDir, srcDir, *args, **kwargs):
+        self.testManager = testRunner.manager
+        self.env = testRunner.env
+        print("Environment is: ", self.env)
+        self.ncpus = testRunner.env.ncpus
+        self.testDir = testDir
+        self.srcDir = srcDir
 
     def _setup_tests(): # Possible function to set up test to take stuff out of run tests
         pass
@@ -188,7 +199,11 @@ class TestScheduler:
             """ Wrap our test class inside our extended multiprocessing.Process object. When we
             initalize this wrapper we will need to pass in any arguments that will need to have
             passed to the test, because we cannot overload the Process.start() function. """
-            testProcess = TestSubProcess(test_launch_name, test, self.env, self.hpc)
+            testProcess = TestSubProcess(test_launch_name, test,
+                                         self.env,
+                                         self.srcDir,
+                                         self.testDir,
+                                         self.hpc)
             loaded_tests.append(testProcess)
 
         # Create the run directory that will hold each test. Each test will be ran within their own
