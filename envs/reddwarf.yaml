@@ -27,12 +27,14 @@ Modsets:
         - gcc
         - gfortran
         - g++
-      MPI_PATH: /sysdisk2/mcurry/build-gcc-9.1.0/mpich-3.3.1
-      mpi_executables:
+    MPI:
+      PATH: /sysdisk2/mcurry/build-gcc-9.1.0/mpich-3.3.1
+      version: 3.3.1
+      executables:
         - mpicc
         - mpif90
         - mpifort
-        - mipexec
+        - mpiexec
         - mpirun
     libs:
       - p-netcdf:

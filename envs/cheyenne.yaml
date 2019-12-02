@@ -28,6 +28,9 @@ Modsets:
       executables:
         - ifort
         - icc
+    MPI:
+      module: mpt
+      version: 2.19
     libs:
       - p-netcdf:
         name: PNETCDF
