@@ -91,6 +91,30 @@ class Environment:
         # Returns a list
         pass
 
+    def _lmod_load(self, module, version=None):
+        # Load module/version using the LMOD command specified in LMOD_CMD in the
+        # environment.yaml description file
+        # If version == None, the default module will be loaded
+
+        if version == None:
+            version = ""
+
+        lmod_load_cmd = str(self.lmod_cmd) + ' python load '
+        module_str = str(module) + '/' + str(version)
+        lmod_load_cmd += module_str
+
+        print("DEBUG: Going to run the following lmod command: ", lmod_load_cmd)
+        module_load = subprocess.Popen(lmod_load_cmd,
+                                       shell=True, # TODO: Exploration around shell=True
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+        # TODO: Information on what exec does
+        exec (module_load.stdout.read())
+
+        # TODO: Explore what happens when errors in this function 
+        return True
+
+
     def _load_compiler(self, compiler, *args, **kwargs):
         # Internal function to load a compiler on a modset
         # print("DEBUG: In Environment._load_compiler(...)")
@@ -99,34 +123,29 @@ class Environment:
         version = compiler['version']
         cmds    = compiler['executables']
 
-        # If LMOD Support enabled:
-            # lmod_cmd = self.lmod_cmd
-
-        # print("DEBUG: Loading compiler: ", name, version)
-
         if 'module' in compiler.keys():
             compiler_module = compiler['module']
             if self.lmod_supported:
-                # Infromation about how the `lmod python` command is translated into python
-                load_compiler_lmod_cmd = str(self.lmod_cmd)+' python load '+compiler_module+'/'+version
-                # print("DEBUG: Load compiler command:\n > ", load_compiler_lmod_cmd)
-                module_load = subprocess.Popen(load_compiler_lmod_cmd,
-                                               shell=True, # TODO: Exploration around shell=True
-                                               stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE)
-                # Information on what exec does
-                exec (module_load.stdout.read())
+                # Load the compiler using LMOD
+                if not self._lmod_load(compiler_module, version):
+                    # TODO: Percolate these back up to the API
+                    print("ERROR: Could not load the compiler: ", name, version)
+                    print("ERROR: using lmod. Is it specified correctly?")
+                    return False
             else:
-                print("Lmod is not supported on this system, no lmod_cmd was given or modules=true"
-                      " was not")
+                # TODO: Percolate these back up to the API
+                # TODO: We should also check for this type of inconsistency when we first load the
+                # lmod file, to catch errors as soon as possible. So this ugly if statement should
+                # go away! (YAY!)
+                print("ERROR: Lmod is not supported on this system, no lmod_cmd was given or")
+                print("ERROR: modules=true was not set to true. ")
+                print("ERROR: Please see the environment.yaml specification for using lmod")
                 return False
-
-        elif 'path' in compiler.keys():
+        elif 'path' in compiler.keys(): # Load the compiler via its PATH specification
             os.environ['PATH'] = compiler['path']+'/bin/'+':'+os.environ['PATH']
-        else:
+        else: 
             print("ERROR: We don't know the method used to load this compiler!")
             sys.exit(-1)
-
 
         # Test the compiler to see if we have the right version loaded
         for cmd in cmds:
@@ -143,9 +162,62 @@ class Environment:
                 print(stderr)
                 return False
 
-        # print("Loaded compiler: ", name, "/", version, " succesfully!", sep='')
+        print("DEBUG: Succesfully Loaded compiler: ", name, "/", version, " succesfully!", sep='')
 
         return True
+
+    def _load_mpi(self, modset, *args, **kwargs):
+        # Internal function to add MPI commands to the top of the path, similarly to how
+        # _load_compiler works
+        mpi = modset['MPI']
+        cmds = modset['MPI']['executables'] # TODO: This should be checked - In yaml load ??
+
+        # Load the MPI implementation depending on if its a module or a path specification
+        if 'module' in mpi.keys():
+            print("DEBUG: This MPI implementation is used with lmod")
+            mpi_module = compiler['module']
+    
+            # Version not necessary with LMOD commands
+            if 'version' in compiler: 
+                mpi_version = compiler['version']
+            else:
+                mpi_version = None
+
+            if not self._lmod_load(mpi_module, mpi_version):
+                # TODO: Percolate these back up to the API
+                print("ERROR: Could not load the mpi implementation: ", mpi_name, mpi_version)
+                print("ERROR: using lmod. Is it specified correctly?")
+                return False
+        elif 'path' in mpi.keys():
+            print("DEBUG: This MPI implementation is sepcified by a path!")
+            os.environ['PATH'] = modset['path']+'/bin/'+':'+os.environ['PATH']
+
+        # See if the MPI_PATH/bin exists
+        #  - Then try and run the mpi executables
+        #  - Possible see if mpicc --version prints out the correct associated compiler ???
+
+        for cmd in cmds:
+            # Some MPI exeuctables print out the version for the copmiler they are linked with, so
+            # just make sure that they are able to run (for now)
+            # TODO: This will also fail if the fork can't find the executable
+            check = subprocess.Popen(cmd, 
+                                     stdout=subprocess.PIPE, 
+                                     stderr=subprocess.PIPE)
+            stdout = str(check.stdout.read(), encoding='utf-8')
+            stderr = str(check.stderr.read(), encoding='utf-8')
+
+            CMD_NOT_FND = 127
+
+            if check.returncode == CMD_NOT_FND:
+                print("ERROR: Could not load this MPI Implementation!")
+                print("ERROR: error was:", stdout)
+                print("ERROR: ", stderr)
+                return False
+
+        print("DEBUG: Loaded MPI implementation succesfully!", mpi)
+
+        return True
+        
 
     def _load_library(self, library, *args, **kwargs):
         # Internal function to load a library based on the modset lib
@@ -164,6 +236,11 @@ class Environment:
         if not self._load_compiler(compiler):
             print("ERROR: There was an error loading the modset! ", modset)
             sys.exit(-1)
+
+        if "MPI" in modset.keys():
+            print("This modset has an MPI Implementation!")
+            # Load MPI executables if this modset has it
+            self._load_mpi(modset)
 
         # for library in modset['libraries']:
         #   if not _load_library(library):
