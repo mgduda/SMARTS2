@@ -22,8 +22,8 @@ class TestSubProcess(Process):
         Process.__init__(self)
         self.test = test
         self.test_launch_name = test_launch_name
-        self.srcDir = srcDir
-        self.testDir = testDir
+        self.srcDir = os.path.abspath(srcDir)
+        self.testDir = os.path.abspath(testDir)
         self.env = env
         self.hpc = hpc
         self.args = args
