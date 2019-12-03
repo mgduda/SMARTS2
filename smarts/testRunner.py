@@ -181,27 +181,25 @@ class TestScheduler:
         return run_directory
         
     def _check_dependencies(self, test, loaded_tests):
-        print(test.test.test_name)
+        dependency_status = []
+
         if hasattr(test.test, 'dependencies'):
             if test.test.dependencies == None:
-                return True
+                return [True]
             else: # If this test has dependencies
                 for dependency in test.test.dependencies:
                     # Check to see if the dependency is running or not
                     for tests in loaded_tests:
                         test_name = tests.test.__class__.__name__
                         if test_name == dependency:
-                            print(tests.status)
                             if tests.status != "Joined":
-                                return False
+                                dependency_status.append(False)
                             else:
-                                return True
+                                dependency_status.append(True)
         else:
-            return True
+            return [True]
 
-        return True
-
-    
+        return dependency_status
 
     def run_tests(self, tests, *args, **kwargs):
         # Pass in the test names? Or test objects?
@@ -261,7 +259,8 @@ class TestScheduler:
                         # If true, all the dependencies are finished so laucnh the test
                         # if not, then don't
                         #print("Checking dependencies!")
-                        if not self._check_dependencies(test, loaded_tests):
+                        #print(test.test.test_name, self._check_dependencies(test, loaded_tests))
+                        if not all(self._check_dependencies(test, loaded_tests)):
                             #print(test.test.test_name, "not gonna start")
                             continue;
 
