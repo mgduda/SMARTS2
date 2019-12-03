@@ -179,6 +179,29 @@ class TestScheduler:
             return False
 
         return run_directory
+        
+    def _check_dependencies(self, test, loaded_tests):
+        print(test.test.test_name)
+        if hasattr(test.test, 'dependencies'):
+            if test.test.dependencies == None:
+                return True
+            else: # If this test has dependencies
+                for dependency in test.test.dependencies:
+                    # Check to see if the dependency is running or not
+                    for tests in loaded_tests:
+                        test_name = tests.test.__class__.__name__
+                        if test_name == dependency:
+                            print(tests.status)
+                            if tests.status != "Joined":
+                                return False
+                            else:
+                                return True
+        else:
+            return True
+
+        return True
+
+    
 
     def run_tests(self, tests, *args, **kwargs):
         # Pass in the test names? Or test objects?
@@ -226,8 +249,22 @@ class TestScheduler:
 
             if avaliable_cpus > 0:
                 for test in loaded_tests:
+    
+                    # Start tge test if we gave enough CPUS and if test is either not alive
+                    # or has not been ran
                     if ( test.test.nCPUs <= avaliable_cpus and not test.is_alive()
                                                            and test.exitcode is None):
+
+
+            
+                        # Check to see if this test has a dependency
+                        # If true, all the dependencies are finished so laucnh the test
+                        # if not, then don't
+                        #print("Checking dependencies!")
+                        if not self._check_dependencies(test, loaded_tests):
+                            #print(test.test.test_name, "not gonna start")
+                            continue;
+
                         avaliable_cpus -= test.test.nCPUs
                         test.start()
                         print(test.test.test_name, "has started!\n")
