@@ -231,7 +231,7 @@ class TestSubProcess(Process):
 class TestScheduler:
 
     def __init__(self, testRunner, testDir, srcDir, *args, **kwargs):
-        self.testManager = testRunner.manager
+        self.manager = testRunner.manager
         self.env = testRunner.env
         print("Environment is: ", self.env)
         self.ncpus = testRunner.env.ncpus
@@ -273,7 +273,7 @@ class TestScheduler:
                     for tests in loaded_tests:
                         test_name = tests.test.__class__.__name__
                         if test_name == dependency:
-                            if tests.status != "Joined":
+                            if tests.status != JOINED:
                                 dependency_status.append(False)
                             else:
                                 dependency_status.append(True)
@@ -297,6 +297,18 @@ class TestScheduler:
         avaliable_cpus = self.ncpus
         self.hpc = None
         run = True
+
+
+        """ Check to see if all the tests are valid tests """
+        avaliable_tests, invalid_tests = self.manager.list_tests()
+        launch_names = [t[0] for t in avaliable_tests]
+        test_names = [t[1] for t in avaliable_tests]
+
+        for test in tests:
+            if test not in launch_names and test not in test_names:
+                print("ERROR: '", test, "' is not a valid test! Quitting!", sep="")
+                sys.exit(-1)
+
         
 
         """ Import and initialize each test - Exit if any Test requested is fails to be 
