@@ -347,8 +347,13 @@ class TestScheduler:
                 continue
 
 
-
         """ Check to see if this test does not require more resources then whats available """
+        for test in loaded_tests:
+            if test.test.nCPUs > avaliable_cpus:
+                print("ERROR: The test '", test.test.test_name, " requires more cpus the available!", sep='')
+                print("ERROR: The machine: '", self.env.name, "' has ", avaliable_cpus, " cpus available", sep='')
+                print("ERROR: And '", test.test.test_name, "' requested: ", test.test.nCPUs, sep='')
+                sys.exit(-1)
 
 
         """ If tests pass all the checks above, then set its status to SCHEDULED """
