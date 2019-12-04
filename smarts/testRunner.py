@@ -8,8 +8,14 @@ import datetime
 
 NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
-# from smarts import HPC
-# import environment
+INITIALIZED = "INITIALIZED"
+SCHEDULED = "SCHEDULED"
+UNSCHEDULED = "UNSCHEDULED"
+RUNNING = "RUNNING"
+FINISHED = "FINISHED"
+JOINED = "JOINED"
+ERROR = "ERROR" 
+
 
 class TestSubProcess(Process):
     """ Wrapper around tests which will enable them to be launched as subprocsses """
@@ -19,7 +25,9 @@ class TestSubProcess(Process):
                                          testDir,
                                          hpc,
                                          *args, **kwargs):
-        Process.__init__(self)
+        Process.__init__(self) # We can pass in arguments here ??
+
+        # TODO: These need to be sent to run's arguments
         self.test = test
         self.test_launch_name = test_launch_name
         self.srcDir = os.path.abspath(srcDir)
@@ -43,6 +51,7 @@ class TestSubProcess(Process):
         self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc, *self.args, **self.kwargs)
         self.status = "Finished"
         return
+
 
 class TestRunner:
     def __init__(self, env, testDir, srcDir, *args, **kwargs):
@@ -106,6 +115,8 @@ class TestRunner:
         self.scheduler.run_tests(tests)
 
 
+
+
 class TestManager:
     def __init__(self, test_directory, *args, **kwargs):
         self.test_directory = test_directory
@@ -153,6 +164,70 @@ class TestManager:
         # Check to see if the test suite and test name are on the system
         raise NotImplementedError("TestManager.check_test"+NOT_IMPLEMENTED_ERROR)
 
+
+class TestSubProcess(Process):
+    """ Wrapper around tests which will enable them to be launched as subprocess """
+    def __init__(self, test_launch_name, test,
+                                         env,
+                                         srcDir,
+                                         testDir,
+                                         hpc,
+                                         *args, **kwargs):
+        Process.__init__(self) # We can pass in arguments here ??
+        self.test = test
+        self.test_launch_name = test_launch_name
+        self.srcDir = os.path.abspath(srcDir)
+        self.testDir = os.path.abspath(testDir)
+        self.env = env
+        self.hpc = hpc
+        self.args = args
+        self.kwargs = kwargs
+        self.status = INITIALIZED
+    
+    def run(self):
+        print("DEBUG: Creating directory for:", self.test_launch_name)
+        os.mkdir(self.test_launch_name)
+
+        if not os.path.isdir(self.test_launch_name):
+            print("ERROR: Can not find directory: ", self.test_launch_name)
+            sys.exit(-1)
+
+        os.chdir(self.test_launch_name)
+        self.status = RUNNING
+        self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc, *self.args, **self.kwargs)
+        self.status = FINISHED
+        return
+
+    def isInitialized(self):
+        pass
+
+    def isRunning(self):
+        if self.status == RUNNING:
+            return True
+        else:
+            return False
+
+    def isFinished(self):
+        if self.exitcode != None:
+            return True
+        else:
+            False
+
+    def isJoined(self):
+        pass
+
+    def isScheduled(self):
+        if self.status == SCHEDULED:
+            return True
+        else:
+            return False
+
+    def getTestResults(self):
+        pass
+
+
+
+
 class TestScheduler:
 
     def __init__(self, testRunner, testDir, srcDir, *args, **kwargs):
@@ -166,13 +241,13 @@ class TestScheduler:
     def _setup_tests(): # Possible function to set up test to take stuff out of run tests
         pass
        
+
     def _create_run_directory(self):
         # If all tests are able to be ran, then create the test directory
         # smarts.year-mm-dd_hh.mm.ss
         run_directory = 'run-smarts-'
         now = datetime.datetime.now()
         run_directory += now.strftime('%Y-%m-%d-%H.%M.%S')
-        # print("DEBUG: Creating directory: ", run_directory)
         os.mkdir(run_directory)
         if not os.path.isdir(run_directory):
             print("ERROR: Could not create run_directory: ", run_directory)
@@ -180,7 +255,13 @@ class TestScheduler:
 
         return run_directory
         
-    def _check_dependencies(self, test, loaded_tests):
+    def _get_depends_status(self, test, loaded_tests):
+        # TODO: Perhaps change this name ?? (get_depends_status(...) 
+        # TODO: See if this returns the correct amount of bools
+        # TODO: Need to explore what happens when a dependency fails, and how to communicate that
+        # to each tests.
+        # Return a list of booleans that corrospond test's dependencies status (currently either
+        # joined or not)
         dependency_status = []
 
         if hasattr(test.test, 'dependencies'):
@@ -201,25 +282,32 @@ class TestScheduler:
 
         return dependency_status
 
+
+    def _update_dependencies(self, test, loaded_tests):
+        pass
+
+
     def run_tests(self, tests, *args, **kwargs):
-        # Pass in the test names? Or test objects?
+        """ 
+
+        """
+
         num_tests = len(tests)
         finished = 0
         avaliable_cpus = self.ncpus
         self.hpc = None
+        run = True
         
 
-        # Import and then initalize each test as a Python Subprocess
+        """ Import and initialize each test - Exit if any Test requested is fails to be 
+        initialized """
         loaded_tests = []
         for test_launch_name in tests:
-            """ Import each test as a module. """
+            # TODO: Try except here
             module = import_module(test_launch_name+'.'+test_launch_name)
             test = getattr(module, test_launch_name) # get the test from the module
             test = test() # Initialize the test
             print(test.test_name, "is scheduled to run!")
-            """ Wrap our test class inside our extended multiprocessing.Process object. When we
-            initalize this wrapper we will need to pass in any arguments that will need to have
-            passed to the test, because we cannot overload the Process.start() function. """
             testProcess = TestSubProcess(test_launch_name, test,
                                          self.env,
                                          self.srcDir,
@@ -227,57 +315,77 @@ class TestScheduler:
                                          self.hpc)
             loaded_tests.append(testProcess)
 
-        # Create the run directory that will hold each test. Each test will be ran within their own
-        # directories within this directory.
-        self.run_directory = self._create_run_directory()
 
+        """ Check to see if this tests dependencies (if it has any) are scheduled to run """
+
+
+        """ Check to see if this test does not require more resources then whats available """
+
+
+        """ If tests pass all the checks above, then set its status to SCHEDULED """
+        for test in loaded_tests:
+            test.status = SCHEDULED
+
+        
+        """ Since all tests pass the above checks, create the run directory and change to that
+        directory  """
+        self.run_directory = self._create_run_directory()
         if not self.run_directory:
             print("ERROR: There was a problem creating the run directory!")
             sys.exit(-1)
-
         os.chdir(self.run_directory)
 
 
         ################
         # Test Scheduler - TODO: Maybe have this in a new function TestScheduler.scheduler(..) ?
         ################
-        while ( finished != num_tests):
-           # print("Number of finished tests:", finished)
-           # print("Number of total tests:", num_tests)
+        """ Test Scheduler
 
-            if avaliable_cpus > 0:
-                for test in loaded_tests:
-    
-                    # Start tge test if we gave enough CPUS and if test is either not alive
-                    # or has not been ran
-                    if ( test.test.nCPUs <= avaliable_cpus and not test.is_alive()
-                                                           and test.exitcode is None):
-
-
-            
-                        # Check to see if this test has a dependency
-                        # If true, all the dependencies are finished so laucnh the test
-                        # if not, then don't
-                        #print("Checking dependencies!")
-                        #print(test.test.test_name, self._check_dependencies(test, loaded_tests))
-                        if not all(self._check_dependencies(test, loaded_tests)):
-                            #print(test.test.test_name, "not gonna start")
-                            continue;
-
-                        avaliable_cpus -= test.test.nCPUs
-                        test.start()
-                        print(test.test.test_name, "has started!\n")
-
-            # Join tests
+        """
+        while ( run ):
+            """ Start tests 
+            If we have enough CPUs, and the test is scheduled and its dependencies have all run,
+            then start it
+            """
             for test in loaded_tests:
-                #print("Joing test: ", test.exitcode, test.is_alive(), test.status)
-                if (test.exitcode is not None and not test.is_alive() 
-                                              and test.status != "Joined"):
-                    test.join(.2) # Wait for .2 seconds for the test to join
-                    test.status = "Joined"
-                    print("Joined with ", test.test.test_name, "this test: ", 
-                                          test.test.status, "\texit: ", test.exitcode)
-                    avaliable_cpus += test.test.nCPUs
-                    finished += 1
+                if (test.test.nCPUs <= avaliable_cpus and test.isScheduled()):
+                    # Check dependencies
+                    if all(self._get_depends_status(test, loaded_tests)):
+                        print("DEBUG: trying to start: ", test.test.test_name, test.status)
+                        avaliable_cpus -= test.test.nCPUs
+                        test.start() # TODO: Try Accept here ??
+                        test.status = RUNNING
+                        print("DEBUG: ", test.test.test_name, test.status, "has started!\n")
+
+
+            """ Join tests """
+            for test in loaded_tests:
+                if test.isRunning():
+                    if test.isFinished():
+                        test.join(.01)
+                        test.status = JOINED
+                        avaliable_cpus += test.test.nCPUs
+                        print("DEBUG: Joined with ", test.test.test_name, "!")
+
+                        results = test.getTestResults()
+
+                        # See if this test fails or not. If it fails, then update any tests that have
+                        # it as a dependency as UNSCHEDULED
+                        self._update_dependencies(test, loaded_tests)
+
+                        """ Report tests results here """
+                        # reporter.report(test, results)
+
+            """ Determine if we are finished running tests or not 
+            We have finished running tests when there is no more tests marked as either RUNNING or
+            as SCHEDULED. """
+            running = [True for test in loaded_tests if test.status == RUNNING]
+            scheduled = [True for test in loaded_tests if test.status == SCHEDULED]
+
+            if any(running) or any(scheduled):
+                continue
+            else:
+                print("DEBUG: All tests are completed - Exiting the scheduler!")
+                run = False
 
         return
