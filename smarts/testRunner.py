@@ -297,6 +297,7 @@ class TestScheduler:
         avaliable_cpus = self.ncpus
         self.hpc = None
         run = True
+        requested_test_names = tests
 
 
         """ Check to see if all the tests are valid tests """
@@ -325,10 +326,26 @@ class TestScheduler:
                                          self.srcDir,
                                          self.testDir,
                                          self.hpc)
+            testProcess.status = INITIALIZED
             loaded_tests.append(testProcess)
 
 
         """ Check to see if this tests dependencies (if it has any) are scheduled to run """
+        for test in loaded_tests:
+            if hasattr(test.test, 'dependencies'):
+                if not test.test.dependencies: # test.test.dependencies == None
+                    continue
+
+                for dep in test.test.dependencies:
+                    if dep not in requested_test_names:
+                        print("ERROR: The dependency '", dep, "' was not requested to run!", sep="")
+                        print("ERROR: Please specify it to run!")
+                        sys.exit(-1)
+                    else:
+                        continue
+            else:
+                continue
+
 
 
         """ Check to see if this test does not require more resources then whats available """
