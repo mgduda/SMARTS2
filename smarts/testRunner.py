@@ -2,9 +2,11 @@
 import os
 import string
 import sys
-from multiprocessing import Process
-from importlib import import_module
 import datetime
+
+from importlib import import_module
+from multiprocessing import Process
+from multiprocessing.managers import BaseManager, NamespaceProxy
 
 NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
@@ -16,41 +18,10 @@ FINISHED = "FINISHED"
 JOINED = "JOINED"
 ERROR = "ERROR" 
 
-
-class TestSubProcess(Process):
-    """ Wrapper around tests which will enable them to be launched as subprocsses """
-    def __init__(self, test_launch_name, test,
-                                         env,
-                                         srcDir,
-                                         testDir,
-                                         hpc,
-                                         *args, **kwargs):
-        Process.__init__(self) # We can pass in arguments here ??
-
-        # TODO: These need to be sent to run's arguments
-        self.test = test
-        self.test_launch_name = test_launch_name
-        self.srcDir = os.path.abspath(srcDir)
-        self.testDir = os.path.abspath(testDir)
-        self.env = env
-        self.hpc = hpc
-        self.args = args
-        self.kwargs = kwargs
-        self.status = "Initialized"
-    
-    def run(self):
-        print("DEBUG: Creating directory for:", self.test_launch_name)
-        os.mkdir(self.test_launch_name)
-
-        if not os.path.isdir(self.test_launch_name):
-            print("ERROR: Can not find directory: ", self.test_launch_name)
-            sys.exit(-1)
-
-        os.chdir(self.test_launch_name)
-        self.status = "Running"
-        self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc, *self.args, **self.kwargs)
-        self.status = "Finished"
-        return
+class TestBaseClass:
+    # This might not be necessary!
+    def __init__(self):
+        pass
 
 
 class TestRunner:
@@ -92,29 +63,7 @@ class TestRunner:
         return self.manager.list_test(tests)
 
     def run_tests(self, tests, env, *args, **kwargs):
-        # For each test:
-        #  Use the test manager to check the given test
-        #  If the test exists then run it using the Test Scheduler
-
-        # Check To see if all tests requested on this system 
-        # Check to see if the requested tests are avaliable on this sytem.
-        # If they are, also check to see if the maximum CPU's are not over
-        # the environments ammount
-#        for test in tests:
-#            # TODO: Might be worthwhile to try to find as many tests as possible and then return
-#            # the all the test names that were not found
-#            if self.manager.list_test(test) == None:
-#                print("The test", test, "could not be found!")
-#                return "The test "+test+" could not be found!"
-#
-        
-        # Create the subdirectory of this regression test run and then move the cwd
-        # into that test directory`
-
-        # Run the tests
         self.scheduler.run_tests(tests)
-
-
 
 
 class TestManager:
@@ -165,6 +114,9 @@ class TestManager:
         raise NotImplementedError("TestManager.check_test"+NOT_IMPLEMENTED_ERROR)
 
 
+""" Class TestSubProcess - Wrapper for individual tests
+
+"""
 class TestSubProcess(Process):
     """ Wrapper around tests which will enable them to be launched as subprocess """
     def __init__(self, test_launch_name, test,
@@ -194,7 +146,7 @@ class TestSubProcess(Process):
 
         os.chdir(self.test_launch_name)
         self.status = RUNNING
-        self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc, *self.args, **self.kwargs)
+        self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc)
         self.status = FINISHED
         return
 
@@ -202,6 +154,7 @@ class TestSubProcess(Process):
         pass
 
     def isRunning(self):
+        # TODO: Make this use self.is_alive()
         if self.status == RUNNING:
             return True
         else:
@@ -228,6 +181,16 @@ class TestSubProcess(Process):
 
 
 
+""" """
+class TestProxy(NamespaceProxy):
+    _exposed_ = ('__getattribute__', '__setattr__', '__delattr__', 'run')
+
+    def run(self, env, srcDir, testDir, hpc=None):
+        callmethod = object.__getattribute__(self, '_callmethod')
+        return callmethod('run', (env, srcDir, testDir,), {'hpc' : hpc})
+
+
+""" """
 class TestScheduler:
 
     def __init__(self, testRunner, testDir, srcDir, *args, **kwargs):
@@ -284,14 +247,22 @@ class TestScheduler:
 
 
     def _update_dependencies(self, test, loaded_tests):
-        pass
+        # If test has dependencies, then update them with its results
+        test_name = test.test_launch_name
+
+        print("DEBUG: Updating the dependencies for ", test_name, dir(test.test))
+
+        if test.test.status == "FAILED":
+            for t in loaded_tests:
+                if test_name in t.test.dependencies:
+                    test.status = UNSCHEDULED
+                    print(test.test.test_name, " set to UNSCHEDULED")
 
 
     def run_tests(self, tests, *args, **kwargs):
         """ 
 
         """
-
         num_tests = len(tests)
         finished = 0
         avaliable_cpus = self.ncpus
@@ -310,7 +281,6 @@ class TestScheduler:
                 print("ERROR: '", test, "' is not a valid test! Quitting!", sep="")
                 sys.exit(-1)
 
-        
 
         """ Import and initialize each test - Exit if any Test requested is fails to be 
         initialized """
@@ -319,9 +289,18 @@ class TestScheduler:
             # TODO: Try except here
             module = import_module(test_launch_name+'.'+test_launch_name)
             test = getattr(module, test_launch_name) # get the test from the module
-            test = test() # Initialize the test
-            print(test.test_name, "is scheduled to run!")
-            testProcess = TestSubProcess(test_launch_name, test,
+            #test = test() # Initialize the test
+
+            """ Test Shared Object (SO) Server """
+            class TestSOServer(BaseManager): pass
+
+            TestSOServer.register('test', test, TestProxy)
+            testSOManager = TestSOServer()
+            testSOManager.start()
+
+            item = testSOManager.test()
+            testProcess = TestSubProcess(test_launch_name, 
+                                         testSOManager.test(),
                                          self.env,
                                          self.srcDir,
                                          self.testDir,
@@ -405,6 +384,7 @@ class TestScheduler:
 
                         # See if this test fails or not. If it fails, then update any tests that have
                         # it as a dependency as UNSCHEDULED
+                        print("DEBUG: Tests status: ", test.test.status)
                         self._update_dependencies(test, loaded_tests)
 
                         """ Report tests results here """
