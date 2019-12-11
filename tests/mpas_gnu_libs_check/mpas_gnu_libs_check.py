@@ -7,9 +7,8 @@ class mpas_gnu_libs_check:
                        "programs"
     dependencies = ['gnu_check']
     nCPUs = 1
-    status = None
 
-    def run(self, env, srcDir, testDir, hpc=None, *args, **kwargs):
+    def run(self, env, result, srcDir, testDir, hpc=None, *args, **kwargs):
 
         # Load any GNU 9.x.x version
         modset = env.list_modsets(name="GNU-9")
@@ -22,9 +21,9 @@ class mpas_gnu_libs_check:
             print("Location of test files is: ", test_files_dir)
         else:
             print("MPAS_GNU_LIBS_CHECK: Could not find the test_files directory!")
-            self.status = "FAILED"
-            self.err_msg = "MPAS_GNU_LIBS_CHECK: Could not find the test_files directory!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "MPAS_GNU_LIBS_CHECK: Could not find the test_files directory!"
+            return -1
 
         for files in os.listdir(test_files_dir):
             copyfile(os.path.join(test_files_dir, files), './'+files)
@@ -33,27 +32,27 @@ class mpas_gnu_libs_check:
         for files in os.listdir(test_files_dir):
             if files not in os.listdir('./'):
                 print("FAILURE: This file could not be copied!", files)
-                self.status = "FAILED"
-                self.err_msg = "FAILURE: This file could not be copied!"+files
-                return self.status
+                result.result = "FAILED"
+                result.msg = "FAILURE: This file could not be copied!"+files
+                return -1
 
         # MPI Test - C and Fortran
 
         ## C
         if os.system('mpicc -o c_mpi mpi.c') != 0:
             print("Failed to compile mpi.c with mpicc")
-            self.status = "FAILED"
-            self.err_msg = "Failed to copmile mpi.c with mpicc!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to copmile mpi.c with mpicc!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile C with mpicc!")
 
         ## Fortran
         if os.system('mpif90 -o f_mpi f_mpi.f90') != 0:
             print("Failed to compile mpi.f90 with mpif90")
-            self.status = "FAILED"
-            self.err_msg = "Failed to copmile mpi.c with mpif90!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to copmile mpi.c with mpif90!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile Fortran with mpif90!")
 
@@ -62,18 +61,18 @@ class mpas_gnu_libs_check:
         ## C
         if os.system('mpicc -o c_pnetcdf pnetcdf.c -I$PNETCDF/include -L$PNETCDF/lib -lpnetcdf'):
             print("Failed to compile pnetcdf.c with mpicc")
-            self.status = "FAILED"
-            self.err_msg = "Failed to compile a C PNetCDF (pnetcdf.c) with mpicc!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to compile a C PNetCDF (pnetcdf.c) with mpicc!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile a C PNetCDF Program!")
 
         ## Fortran
         if os.system('mpif90 -c pnetcdf.f90 -I$PNETCDF/include -L$PNETCDF/lib -lpnetcdf'):
             print("Failed to compile mpi.f90 with mpif90")
-            self.status = "FAILED"
-            self.err_msg = "Failed to copmile a Fortran PNetCDF (pnetcdf.f90) with mpif90!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to copmile a Fortran PNetCDF (pnetcdf.f90) with mpif90!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile a Fortran PNetCDF (pnetcdf.f90) Program!")
 
@@ -82,18 +81,18 @@ class mpas_gnu_libs_check:
         ## C
         if os.system('mpicc -o c_netcdf netcdf.c -I$NETCDF/include -I$PNETCDF/include -L$NETCDF/lib -L$PNETCDF/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz -lm'):
             print("Failed to compile netcdf.c with mpicc")
-            self.status = "FAILED"
-            self.err_msg = "Failed to compile a C NetCDF program (netcdf.c) with mpicc!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to compile a C NetCDF program (netcdf.c) with mpicc!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile a C NetCDF Program!")
 
         ## Fortran
         if os.system('mpif90 -c netcdf.f90 -I$NETCDF/include -I$PNETCDF/include -L$NETCDF/lib -L$PNETCDF/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz -lm'):
             print("Failed to compile netcdf.f90 with mpif90")
-            self.status = "FAILED"
-            self.err_msg = "Failed to compile a Fortran NetCDF program (netcdf.f90) with mpif90!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to compile a Fortran NetCDF program (netcdf.f90) with mpif90!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile a Fortran NetCDF Program!")
 
@@ -102,22 +101,21 @@ class mpas_gnu_libs_check:
         ## C
         if os.system('mpicc -o c_pio pio.c -I$PIO/include -I$NETCDF/include -I$PNETCDF/include -L$PIO/lib -L$PNETCDF/lib -lpio -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz'):
             print("Failed to compile pio.c with mpicc")
-            self.status = "FAILED"
-            self.err_msg = "Failed to compile a C PIO program (netcdf.c) with mpicc!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to compile a C PIO program (netcdf.c) with mpicc!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile a C PIO Program!")
 
         ## Fortran
         if os.system('mpifort -o piof piof.f90 -I$PIO/include -I$NETCDF/include -I$PNETCDF/include -L$PIO/lib -L$NETCDF/lib -L$PNETCDF/lib -lpiof -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz -lm'):
             print("Failed to compile piof.f90 with mpif90")
-            self.status = "FAILED"
-            self.err_msg = "Failed to compile a Fortran PIO program (pio.f90) with mpif90!"
-            return self.status
+            result.result = "FAILED"
+            result.msg = "Failed to compile a Fortran PIO program (pio.f90) with mpif90!"
+            return -1
         else:
             print("MPAS_GNU_LIBS_CHECK: Can compile a Fortran PIO Program!")
 
-
-        self.status = "PASSED"
-        self.err_msg = "All tests passed!"
-        return self.status
+        result.result = "PASSED"
+        result.msg = "Can succsfully compile all MPAS IO Libraries"
+        return 0
