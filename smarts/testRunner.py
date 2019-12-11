@@ -412,4 +412,11 @@ class TestScheduler:
                 print("DEBUG: All tests are completed - Exiting the scheduler!")
                 run = False
 
+        # Do reporting stuff here
+        print("\n\nTEST RESULTS")
+        print("===============================================")
+        for test in loaded_tests:
+            print(' - ', test.test_launch_name,
+                  ' - ', test.result.result,
+                  ' - ', test.result.msg )
         return
