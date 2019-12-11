@@ -242,12 +242,15 @@ class TestScheduler:
 
 
     def _update_dependents(self, test, loaded_tests):
-        # Using the result within test, update 
+        # Using the result within test, update
         testStatus = test.result.result
         test_name = test.test.test_name
         test_launch_name = test.test.__class__.__name__
 
-        if testStatus == "FAILED" or testStatus == "INCOMPLETE" or testStatus == None:
+        if (   testStatus == "FAILED"
+            or testStatus == "INCOMPLETE"
+            or testStatus == "ERROR"
+            or testStatus == None):
             for t in loaded_tests:
                 if not hasattr(t.test, 'dependencies'):
                     continue
@@ -378,6 +381,9 @@ class TestScheduler:
                         test.status = JOINED
                         avaliable_cpus += test.test.nCPUs
                         print("SMARTS: ", test.test.test_name, " finished - It: ", test.result.result)
+
+                        if test.result.result is None:
+                            test.result.result = ERROR
 
                         # See if this test fails or not. If it fails, then update any tests that have
                         # it as a dependency as UNSCHEDULED
