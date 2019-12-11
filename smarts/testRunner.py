@@ -258,7 +258,26 @@ class TestScheduler:
 
 
     def _update_dependencies(self, test, loaded_tests):
-        pass
+        # Using the result within test, 
+        testStatus = test.result.result
+        test_name = test.test.test_name
+        test_launch_name = test.test.__class__.__name__
+
+        if testStatus == "FAILED" or testStatus == None:
+            for t in loaded_tests:
+                if not hasattr(t.test, 'dependencies'):
+                    continue
+
+                if t.test.dependencies is None:
+                    continue
+
+                if test_name in t.test.dependencies or test_launch_name in t.test.dependencies:
+                    # If test has failed, mark its dependnents as UNSCHEDULED and then update those
+                    # the depedents of those tests.
+                    print("DEBUG: Unscheduling ", t.test.test_name)
+                    t.status = UNSCHEDULED
+                    t.result.result = "FAILED"
+                    self._update_dependencies(t, loaded_tests)
 
 
     def run_tests(self, tests, *args, **kwargs):
@@ -371,11 +390,12 @@ class TestScheduler:
                         test.join(.01)
                         test.status = JOINED
                         avaliable_cpus += test.test.nCPUs
-                        print("DEBUG: Joined with ", test.test.test_name, "! Its Result was: ", test.result.result)
+                        print("DEBUG: Joined with", test.test.test_name, "! Its Result was:", test.result.result)
+                        print("DEBUG: Result Message: '", test.result.msg, "'", sep='')
 
                         # See if this test fails or not. If it fails, then update any tests that have
                         # it as a dependency as UNSCHEDULED
-                        # self._update_dependencies(test, loaded_tests)
+                        self._update_dependencies(test, loaded_tests)
 
                         """ Report tests results here """
                         # reporter.report(test, results)
