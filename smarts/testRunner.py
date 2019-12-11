@@ -2,9 +2,13 @@
 import os
 import string
 import sys
-from multiprocessing import Process
-from importlib import import_module
 import datetime
+from importlib import import_module
+
+from multiprocessing import Process
+from multiprocessing.managers import BaseManager, NamespaceProxy
+
+from smarts.reporters.reporter import Result
 
 NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
@@ -15,6 +19,7 @@ RUNNING = "RUNNING"
 FINISHED = "FINISHED"
 JOINED = "JOINED"
 ERROR = "ERROR" 
+
 
 class TestRunner:
     def __init__(self, env, testDir, srcDir, *args, **kwargs):
@@ -131,10 +136,11 @@ class TestManager:
 class TestSubProcess(Process):
     """ Wrapper around tests which will enable them to be launched as subprocess """
     def __init__(self, test_launch_name, test,
+                                         result,
                                          env,
                                          srcDir,
                                          testDir,
-                                         hpc,
+                                         hpc=None,
                                          *args, **kwargs):
         Process.__init__(self) # We can pass in arguments here ??
         self.test = test
@@ -146,6 +152,10 @@ class TestSubProcess(Process):
         self.args = args
         self.kwargs = kwargs
         self.status = INITIALIZED
+        # Initalize the Result Class - I.E. Start the Result Manager
+        result = result()
+        result.start()
+        self.result = result.result()
     
     def run(self):
         print("DEBUG: Creating directory for:", self.test_launch_name)
@@ -157,7 +167,13 @@ class TestSubProcess(Process):
 
         os.chdir(self.test_launch_name)
         self.status = RUNNING
-        self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc, *self.args, **self.kwargs)
+        self.test.run(self.env,
+                      self.result,
+                      self.srcDir,
+                      self.testDir,
+                      hpc=self.hpc,
+                      *self.args,
+                      **self.kwargs)
         self.status = FINISHED
         return
 
@@ -184,11 +200,6 @@ class TestSubProcess(Process):
             return True
         else:
             return False
-
-    def getTestResults(self):
-        pass
-
-
 
 
 class TestScheduler:
@@ -285,6 +296,7 @@ class TestScheduler:
             test = test() # Initialize the test
             print(test.test_name, "is scheduled to run!")
             testProcess = TestSubProcess(test_launch_name, test,
+                                         Result,
                                          self.env,
                                          self.srcDir,
                                          self.testDir,
@@ -336,9 +348,6 @@ class TestScheduler:
         ################
         # Test Scheduler - TODO: Maybe have this in a new function TestScheduler.scheduler(..) ?
         ################
-        """ Test Scheduler
-
-        """
         while ( run ):
             """ Start tests 
             If we have enough CPUs, and the test is scheduled and its dependencies have all run,
@@ -362,13 +371,11 @@ class TestScheduler:
                         test.join(.01)
                         test.status = JOINED
                         avaliable_cpus += test.test.nCPUs
-                        print("DEBUG: Joined with ", test.test.test_name, "!")
-
-                        results = test.getTestResults()
+                        print("DEBUG: Joined with ", test.test.test_name, "! Its Result was: ", test.result.result)
 
                         # See if this test fails or not. If it fails, then update any tests that have
                         # it as a dependency as UNSCHEDULED
-                        self._update_dependencies(test, loaded_tests)
+                        # self._update_dependencies(test, loaded_tests)
 
                         """ Report tests results here """
                         # reporter.report(test, results)
