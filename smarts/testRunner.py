@@ -16,43 +16,6 @@ FINISHED = "FINISHED"
 JOINED = "JOINED"
 ERROR = "ERROR" 
 
-
-class TestSubProcess(Process):
-    """ Wrapper around tests which will enable them to be launched as subprocsses """
-    def __init__(self, test_launch_name, test,
-                                         env,
-                                         srcDir,
-                                         testDir,
-                                         hpc,
-                                         *args, **kwargs):
-        Process.__init__(self) # We can pass in arguments here ??
-
-        # TODO: These need to be sent to run's arguments
-        self.test = test
-        self.test_launch_name = test_launch_name
-        self.srcDir = os.path.abspath(srcDir)
-        self.testDir = os.path.abspath(testDir)
-        self.env = env
-        self.hpc = hpc
-        self.args = args
-        self.kwargs = kwargs
-        self.status = "Initialized"
-    
-    def run(self):
-        print("DEBUG: Creating directory for:", self.test_launch_name)
-        os.mkdir(self.test_launch_name)
-
-        if not os.path.isdir(self.test_launch_name):
-            print("ERROR: Can not find directory: ", self.test_launch_name)
-            sys.exit(-1)
-
-        os.chdir(self.test_launch_name)
-        self.status = "Running"
-        self.test.run(self.env, self.srcDir, self.testDir, hpc=self.hpc, *self.args, **self.kwargs)
-        self.status = "Finished"
-        return
-
-
 class TestRunner:
     def __init__(self, env, testDir, srcDir, *args, **kwargs):
         # The test directory is the directory that holds each test's implementation , not where
