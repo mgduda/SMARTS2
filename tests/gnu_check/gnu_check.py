@@ -9,6 +9,11 @@ class gnu_check:
     def run(self, env, result, src_dir, test_dir, hpc=None, *args, **kwargs):
         # Load GNU Compilers
         gnu_compilers = env.list_modsets(name="GNU")
+        if len(gnu_compilers) == 0:
+            result.result = "FAILED"
+            result.msg = "Could not load any GNU Modsets!"
+            return -1
+
         for versions in gnu_compilers:
             # For each compiler, test to see if we can make, and compile simple
             # C and Fortran programs
