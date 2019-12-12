@@ -221,8 +221,35 @@ class Environment:
         return self.env['Modsets'][modsetName]
 
     def _load_library(self, library, *args, **kwargs):
-        # Internal function to load a library based on the modset lib
-        pass
+        # Internal function to load a single library, library
+
+        # The library is specified as a lmod module
+        if 'module' in library.keys():
+            module = library['module']
+
+            if 'version' in library.keys():
+                version = library['version']
+            else:
+                version = ""
+
+            if not self._lmod_load(module, version):
+                print("ERROR: Could not load the library: ", mpi_name, mpi_version)
+                print("ERROR: using lmod. Is it specified correctly?")
+                return False
+        # The library is specified as a environment variable
+        elif 'name' in library.keys():
+            if 'value' in library.keys():
+                env_name = library['name']
+                value = library['value']
+                
+                print("SMARTS: Setting the env variable:", env_name, "to value:", value)
+                os.environ[env_name] = value
+                print("SMARTS: Environment variable is: ", os.environ[env_name])
+            else:
+                print("ERROR: For the library", library['name'], "does not have a maching value name")
+                return False
+
+        return True
 
     def load_modset(self, modsetName, *args, **kawrgs):
         # print("DEBUG: In Environment.load_modset(...)")
@@ -243,10 +270,10 @@ class Environment:
             # Load MPI executables if this modset has it
             self._load_mpi(modset)
 
-        # for library in modset['libraries']:
-        #   if not _load_library(library):
-        #       print("ERROR: There was an error loading this library! ", library)
-        #       sys.exit(-1)
+        for library in modset['libs']:
+            if not self._load_library(library):
+                print("ERROR: There was an error loading this library! ", library)
+                sys.exit(-1)
 
         print("SMARTS: Loaded modset: '", modsetName, "' succsfully!", sep='')
 
