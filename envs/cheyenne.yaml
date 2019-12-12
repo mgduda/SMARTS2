@@ -5,7 +5,7 @@
 
 Description:
   Name: Cheyenne
-  Max Cores: -
+  Max Cores: 1
   Modules: True
   LMOD_CMD: /glade/u/apps/ch/opt/lmod/8.1.7/lmod/lmod/libexec/lmod
   HPC: PBS
