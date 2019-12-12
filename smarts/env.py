@@ -176,11 +176,11 @@ class Environment:
 
         # Load the MPI implementation depending on if its a module or a path specification
         if 'module' in mpi.keys():
-            mpi_module = compiler['module']
+            mpi_module = mpi['module']
     
             # Version not necessary with LMOD commands
-            if 'version' in compiler: 
-                mpi_version = compiler['version']
+            if 'version' in mpi: 
+                mpi_version = mpi['version']
             else:
                 mpi_version = None
 
