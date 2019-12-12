@@ -31,6 +31,9 @@ Modsets:
     MPI:
       module: mpt
       version: 2.19
+      executables:
+        - mpicc
+        - mpif90
     libs:
       - p-netcdf:
         name: PNETCDF
@@ -41,3 +44,31 @@ Modsets:
       - pio:
         name: PIO
         value: /glade/work/duda/libs-intel19.0.2
+  ###############
+  # GNU-8.3.0
+  ###############
+  GNU-8.3.0:
+    name: gnu-8.3.0
+    compiler:
+      name: gnu
+      version: 8.3.0
+      module: gnu
+      executables:
+        - gcc
+        - gfortran
+        - g++
+    MPI:
+      module: mpt
+      version: 2.19
+      executables:
+        - mpicc
+        - mpif90
+    libs:
+      - p-netcdf:
+        module: pnetcdf
+      - c-netcdf:
+        module: netcdf-mpi
+      - pio:
+        module: pio
+
+
