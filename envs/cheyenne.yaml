@@ -19,7 +19,7 @@ Modsets:
   ###############
   # INTEL-19.0.2
   ###############
-  - INTEL-19.0.2:
+  INTEL-19.0.2:
     name: intel-19.0.2
     compiler:
       name: intel

@@ -70,16 +70,18 @@ class Environment:
         # If name is None, list out all modests found in the environment.yaml file,
         # else, list out the modests that contain name.
         # Returns a list
-        if name is None:
-            modsets = self.env['Modsets']
-        else:
-            modsets = []
-            for modset in self.env['Modsets']:
-                if name in list(modset.keys())[0]:
-                    modsets.append(modset)
 
-        return modsets
+        modsets = self.env['Modsets']
 
+        modsetNames = []
+        for modset in list(modsets.keys()):
+            if name:
+                if name in modset:
+                    modsetNames.append(modset)
+            else:
+                modsetNames.append(modset)
+
+        return modsetNames
 
     def list_modset(self, modset, *args, **kwargs):
         # List the information of a single modest
@@ -162,7 +164,7 @@ class Environment:
                 print(stderr)
                 return False
 
-        print("DEBUG: Succesfully Loaded compiler: ", name, "/", version, " succesfully!", sep='')
+        # print("DEBUG: Succesfully Loaded compiler: ", name, "/", version, " succesfully!", sep='')
 
         return True
 
@@ -174,7 +176,6 @@ class Environment:
 
         # Load the MPI implementation depending on if its a module or a path specification
         if 'module' in mpi.keys():
-            print("DEBUG: This MPI implementation is used with lmod")
             mpi_module = compiler['module']
     
             # Version not necessary with LMOD commands
@@ -189,7 +190,6 @@ class Environment:
                 print("ERROR: using lmod. Is it specified correctly?")
                 return False
         elif 'path' in mpi.keys():
-            print("DEBUG: This MPI implementation is sepcified by a path!")
             os.environ['PATH'] = modset['path']+'/bin/'+':'+os.environ['PATH']
 
         # See if the MPI_PATH/bin exists
@@ -214,19 +214,21 @@ class Environment:
                 print("ERROR: ", stderr)
                 return False
 
-        print("DEBUG: Loaded MPI implementation succesfully!", mpi)
-
         return True
         
+    def get_modset(self, modsetName, *args, **kwargs):
+        # Return the YAML dictionary representation for the modset modset
+        return self.env['Modsets'][modsetName]
 
     def _load_library(self, library, *args, **kwargs):
         # Internal function to load a library based on the modset lib
         pass
 
-    def load_modset(self, modset, *args, **kawrgs):
+    def load_modset(self, modsetName, *args, **kawrgs):
         # print("DEBUG: In Environment.load_modset(...)")
     
         # Load a modset
+        modset = self.env['Modsets'][modsetName]
         compiler = modset['compiler']
 
         # print("DEBUG: Requested modset is: ", modset)
@@ -238,7 +240,6 @@ class Environment:
             sys.exit(-1)
 
         if "MPI" in modset.keys():
-            print("This modset has an MPI Implementation!")
             # Load MPI executables if this modset has it
             self._load_mpi(modset)
 
@@ -247,5 +248,6 @@ class Environment:
         #       print("ERROR: There was an error loading this library! ", library)
         #       sys.exit(-1)
 
+        print("SMARTS: Loaded modset: '", modsetName, "' succsfully!", sep='')
 
         return True
