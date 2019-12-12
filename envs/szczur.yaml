@@ -1,0 +1,45 @@
+---
+
+################################
+# szczur - 4-core macOS laptop
+################################
+
+
+Description:
+  Name: szczur
+  Max Cores: 4
+  Modules: False
+  HPC: False
+
+Modsets:
+  ############
+  # GNU-9.2.0
+  ############
+  GNU-9.2.0:
+    name: gnu-9.2.0
+    compiler:
+      name: gnu
+      version: 9.2.0
+      path: /Users/duda/local/gcc-9.2.0
+      executables:
+        - gcc
+        - gfortran
+        - g++
+      MPI-PATH: /Users/duda/local/gcc-9.2.0
+      mpi-executables:
+        - mpicc
+        - mpifort
+        - mpic++
+    libs:
+      - p-netcdf:
+        ENV-NAME: PNETCDF
+        value: /Users/duda/local/gnu/9.2.0/lib
+      - c-netcdf:
+        ENV-NAME: NETCDF
+        value: /Users/duda/local/gnu/9.2.0/lib
+      - f-netcdf:
+        ENV-NAME: NETCDFF
+        value: /Users/duda/local/gnu/9.2.0/lib
+      - PIO:
+        ENV-NAME: PIO
+        value: /Users/duda/local/gnu/9.2.0/lib
