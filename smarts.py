@@ -126,11 +126,13 @@ def run_cmd(args):
     testDir = args.dir[0] # The directory that contains each test
     srcDir = args.src[0]  # The directory that contains the code to be tested
     envFile = args.env[0] # The environment.yaml file
+    tests = list(set(args.items))
+    # tests = args.items)
 
     env, test_handler = setup_smarts(envFile, testDir, srcDir)
 
-    print("Running tests: ", args.items)
-    test_handler.run_tests(args.items, env)
+    print("Running tests: ", tests)
+    test_handler.run_tests(tests, env)
 
     return 0
 
