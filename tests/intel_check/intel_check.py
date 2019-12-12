@@ -11,18 +11,14 @@ class intel_check:
         # Load INTEL Compilers
         intel_compilers = env.list_modsets(name="INTEL")
         for versions in intel_compilers:
-            version = versions['compiler']['version']
+            modset = env.load_modset(versions)
 
             # For each compiler, test to see if we can make, and compile simple
             # C and Fortran programs
-            if not env.load_modset(versions):
-                print("Failed to load", versions)
+            if not modset:
                 result.result = "FAILED"
                 result.msg = "Failed to load "+versions
                 return -1
-
-            print("INTEL_CHECK: Checking to see if intel", versions['compiler']['version'],
-                  "can compile C and Fortran programs...")
 
             simple_c_prog = "int main(void) { return 0; }"
             simple_fortran_prog = "end"
@@ -33,7 +29,6 @@ class intel_check:
 
             # Check to see if the c program source file was written
             if not os.path.isfile('./simple_c_prog.c'):
-                print("FAILED: Was unable to create ./simple_c_prog.c")
                 result.result = "FAILED"
                 result.msg = "Unable to create ./simple_c_prog.c"
                 return -1
@@ -44,30 +39,22 @@ class intel_check:
 
             # Check to see if the fortran source file was written
             if not os.path.isfile('./simple_fortran_prog.f90'):
-                print("FAILED: Was unable to create ./simple_fortran_prog.f90")
                 result.result = "FAILED"
                 result.msg = "Unable to create ./simple_fortran_prog.f90"
                 return -1
 
             # Compiler c program and check to see if it compiles correctly 
             if os.system('icc -o c_prog simple_c_prog.c') != 0:
-                print("Failed to compile simple_c_prog.c with icc")
                 result.result = "FAILED"
                 result.msg = "Failed to copmile simple_c_prog.c with intel/"+version
                 return -1
-            else:
-                print("Intel", versions['compiler']['version'], "can compile C programs ...")
             
             # Compile Fortran program and check to see if it compiles correctly
             if os.system('ifort -o f_prog simple_fortran_prog.f90') != 0:
-                print("Failed to compile simple_fortran_prog.f90 with ifort")
                 result.result = "FAILED"
                 result.msg = "Failed to copmile simple_fortran_prog.f90 with intel/"+version
                 return -1
-            else:
-                print("Intel", versions['compiler']['version'], "can compile Fortran programs ...")
 
-        print("intel_check - COMPLETE!")
         result.result = "PASSED"
         result.msg = "Intel Check COMPLETED!"
         return 0

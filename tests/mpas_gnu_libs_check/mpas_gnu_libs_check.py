@@ -12,8 +12,9 @@ class mpas_gnu_libs_check:
 
         # Load any GNU 9.x.x version
         modset = env.list_modsets(name="GNU-9")
-        modset_name = list(modset[0].keys())[0]
-        env.load_modset(modset[0][modset_name])
+        if not env.load_modset(modset[0]):
+            result.result = "FAILED"
+            result.msg = "Could not find, or load a GNU-9 modset"
 
         # List the directories that are in my test directory (I'm looking for `test_files`)
         if 'test_files' in os.listdir(os.path.join(testDir, 'mpas_gnu_libs_check')):
