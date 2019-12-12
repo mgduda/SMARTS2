@@ -44,6 +44,37 @@ Modsets:
       - pio:
         name: PIO
         value: /glade/work/duda/libs-intel19.0.2
+
+  ###############
+  # GNU-9.3.0
+  ###############
+  GNU-9.1.0:
+    name: gnu-9.1.0
+    compiler:
+      name: gnu
+      version: 9.1.0
+      module: gnu
+      executables:
+        - gcc
+        - gfortran
+        - g++
+    MPI:
+      module: mpt
+      version: 2.19
+      executables:
+        - mpicc
+        - mpif90
+    libs:
+      - p-netcdf:
+        module: pnetcdf
+        version: 1.11.1
+      - c-netcdf:
+        module: netcdf-mpi
+      - pio:
+        module: pio
+
+
+
   ###############
   # GNU-8.3.0
   ###############
