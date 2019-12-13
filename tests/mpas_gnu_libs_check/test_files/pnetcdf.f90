@@ -1,7 +1,7 @@
 program pnetcdf_test
 
    use mpi
-   use netcdf
+   use pnetcdf
 
    integer :: ierr, ncid
 
