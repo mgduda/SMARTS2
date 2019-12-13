@@ -157,7 +157,7 @@ class Environment:
             stdout = str(check.stdout.read(), encoding='utf-8')
             stderr = str(check.stderr.read(), encoding='utf-8')
 
-            if version not in stdout:
+            if str(version) not in stdout:
                 print(version, " was not succesfully loaded for the command ", cmd)
                 print("Instead got: ")
                 print(stdout)
