@@ -31,12 +31,9 @@ class smiol_pgi:
             if not os.path.isdir(smiol_test_dir):
                 result.result = "ERROR"
                 result.msg = "Could not create directory: "+smiol_test_dir
+                return
 
             os.chdir(smiol_test_dir)
-            if os.getcwd() != smiol_test_dir:
-                result.result = "ERROR"
-                result.msg = "Could not change directory to: "+smiol_test_dir
-
 
             ierr = os.system('make gnu')
             if ierr != 0:
