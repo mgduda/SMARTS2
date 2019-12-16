@@ -41,7 +41,7 @@ class smiol_intel:
             ierr = os.system('make intel')
             if ierr != 0:
                 result.result = "FAILED"
-                result.msg = "'Make intel' returned a non-zero error code: "+ierr
+                result.msg = "'Make intel' returned a non-zero error code: "+str(ierr)
                 return
 
             if not os.path.isfile('libsmiol.a'):
@@ -70,7 +70,7 @@ class smiol_intel:
 
             if c_run.returncode != 0:
                 result.result = "FAILED"
-                result.msg = "Recived non-zero return code from './smiol_runner_c' run: ", c_run.returncode
+                result.msg = "Recived non-zero return code from './smiol_runner_c' run: ", str(c_run.returncode)
                 return
 
             f_run = subprocess.Popen('./smiol_runner_f', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -79,7 +79,7 @@ class smiol_intel:
 
             if f_run.returncode != 0:
                 result.result = "FAILED"
-                result.msg = "Recived non-zero return code from './smiol_runner_f' run: ", f_run.returncode
+                result.msg = "Recived non-zero return code from './smiol_runner_f' run: ", str(f_run.returncode)
                 return
 
             # Go back to the main test run directory
