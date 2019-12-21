@@ -305,9 +305,17 @@ class TestScheduler:
 
         for test in tests:
             if test not in launch_names and test not in test_names:
-                print("ERROR: '", test, "' is not a valid test! Quitting!", sep="")
-                sys.exit(-1)
+                # This test was invalid - I.E. syntax, wrong format etc
+                for invalid in invalid_tests:
+                    if test in invalid[0]:
+                        print("ERROR: The test, '", test, "' could not be loaded!", sep="")
+                        print("ERROR:", invalid[1])
+                        sys.exit(-1)
 
+                # Could not find test - Test name
+                print("ERROR: '", test, "' is not a test that could be found within:", sep="")
+                print("ERROR:", os.path.abspath(self.testDir))
+                sys.exit(-1)
 
         """ Import and initialize each test - Exit if any Test requested is fails to be 
         initialized """
