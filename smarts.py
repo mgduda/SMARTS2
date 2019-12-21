@@ -88,9 +88,6 @@ def list_cmd(args):
     envFile = args.env[0]
     envFile = os.path.abspath(envFile)
     
-    #print("TEST DIR: ", testDir)
-    #print("ENV FILE: ", envFile)
-
     env, test_handler = setup_smarts(envFile, testDir)
 
     if len(args.items) == 1:
@@ -131,7 +128,7 @@ def run_cmd(args):
 
     env, test_handler = setup_smarts(envFile, testDir, srcDir)
 
-    print("Running tests: ", tests)
+    print("Requested tests: ", tests)
     test_handler.run_tests(tests, env)
 
     return 0
@@ -150,23 +147,18 @@ if __name__ == "__main__":
                         dest='env',
                         help='The location of the env.yaml file',
                         metavar='env.yaml',
-                        required=True,
                         default=None,
                         nargs=1)
-    # TODO: We don't need the src dir for specified calls, so make it optional. But we will need to
-    # do some of our own coding to make it required in some areas
     parser.add_argument('-s', '--src-dir',
                         dest='src',
                         help='The directory that holds the code to test changes (MPAS-Model)',
                         metavar='dir',
-                        required=False,
                         default=None,
                         nargs=1)
     parser.add_argument('-t', '--test-dir',
                         dest='dir',
                         help='The location of the test directory',
                         metavar='dir',
-                        required=True,
                         default=None,
                         nargs=1)
     parser.add_argument('-v', '--verbose',
@@ -184,37 +176,54 @@ if __name__ == "__main__":
                                        help='Sub-command help message')
 
     # List subcommand
-    # TODO: Rename parserList to listParser
-    parserList = subparsers.add_parser('list',
+    # TODO: Rename listParser to listParser
+    listParser = subparsers.add_parser('list',
                                        help="List SMART's tests, test suites and compilers",
                                        description='Description for list sub-command',
                                        epilog='Epilog for list sub-command')
-    parserList.add_argument('items', 
+    listParser.add_argument('items',
                              help='List items help message',
                              nargs='+')
-    parserList.set_defaults(func=list_cmd)
+    listParser.set_defaults(func=list_cmd)
 
     # Run subcommand
-    # TODO: Rename parserRun to runParser
-    parserRun = subparsers.add_parser('run',
+    # TODO: Rename runParser to runParser
+    runParser = subparsers.add_parser('run',
                                      help="Run a test or a test-suite by name",
                                      description='Description for run sub-command',
                                      epilog='Epilog for run sub-command')
-    parserRun.add_argument('items',
+    runParser.add_argument('items',
                             help='Run items help message',
                             nargs='+')
-    parserRun.set_defaults(func=run_cmd)
+    runParser.set_defaults(func=run_cmd)
 
     args = parser.parse_args()
+    args.parser = parser
 
     # TODO: Also do this for the following:
     # list tests - Only need the test directory
     # list modsets - Only need the environment file
+
     if args.command == 'run' and args.src is None:
-        print("ERROR: Please provide a src directory when using the `run` command")
+        parser.print_usage()
+        print("ERROR: Please provide a src directory: -s dir, --src-dir dir")
+        sys.exit(-1)
+    elif args.command == 'run' and args.env is None:
+        parser.print_usage()
+        print("ERROR: Please provide a environment file: -e env.yaml, --env-file env.yaml")
+        sys.exit(-1)
+    elif args.command == 'run' and args.dir is None:
+        parser.print_usage()
+        print("ERROR: Please provide a test directory: -t dir, --test-dir dir")
         sys.exit(-1)
 
-    # In conjuction with the .set_defaults(func=x) command, for both the parserList,
-    # and parserRun, the argparser will call the function x, depending on what command
+    if args.command == 'list tests' and args.dir is None:
+        parser.print_usage()
+        print("ERROR: Please provide a test directory -t dir, --test-dir dir")
+        sys.exit(-1)
+
+
+    # In conjuction with the .set_defaults(func=x) command, for both the listParser,
+    # and runParser, the argparser will call the function x, depending on what command
     # was passed in to the argparser.
     args.func(args)
