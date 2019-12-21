@@ -63,7 +63,6 @@ class Environment:
         else:
             self.lmod_supported = False
 
-        print("\nEnvironment file read successfully!\n")
         return 0;
 
     def list_modsets(self, name=None, *args, **kwargs):

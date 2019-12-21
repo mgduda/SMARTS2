@@ -7,8 +7,6 @@ import argparse
 from smarts.env import Environment
 from smarts.testRunner import TestRunner
 
-
-
 def print_tests(test_directory, valid_tests, invalid_tests):
     # SMARTS Command Line API print tests function - Print the list of valid 
     # and invalid lists to the tests
@@ -81,8 +79,6 @@ def list_cmd(args):
     # SMARTS Command Line API for listing out tests, test-suites, modsets, 
     # and test infromation
 
-    # TODO: For listing tests or modsets, we don't need the src dir, so make it optional here
-
     testDir = args.dir[0] 
     testDir = os.path.abspath(testDir) # Convert relative path into an absolute path
     envFile = args.env[0]
@@ -127,11 +123,8 @@ def run_cmd(args):
     srcDir = args.src[0]  # The directory that contains the code to be tested
     envFile = args.env[0] # The environment.yaml file
     tests = list(set(args.items))
-    # tests = args.items)
 
     env, test_handler = setup_smarts(envFile, testDir, srcDir)
-
-    print("Requested tests: ", tests)
     test_handler.run_tests(tests, env)
 
     return 0
@@ -179,7 +172,6 @@ if __name__ == "__main__":
                                        help='Sub-command help message')
 
     # List subcommand
-    # TODO: Rename listParser to listParser
     listParser = subparsers.add_parser('list',
                                        help="List SMART's tests, test suites and compilers",
                                        description='Description for list sub-command',
@@ -190,7 +182,6 @@ if __name__ == "__main__":
     listParser.set_defaults(func=list_cmd)
 
     # Run subcommand
-    # TODO: Rename runParser to runParser
     runParser = subparsers.add_parser('run',
                                      help="Run a test or a test-suite by name",
                                      description='Description for run sub-command',

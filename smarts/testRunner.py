@@ -211,7 +211,6 @@ class TestScheduler:
     def __init__(self, testRunner, testDir, srcDir, *args, **kwargs):
         self.manager = testRunner.manager
         self.env = testRunner.env
-        print("Environment is: ", self.env)
         self.ncpus = testRunner.env.ncpus
         self.testDir = testDir
         self.srcDir = srcDir
