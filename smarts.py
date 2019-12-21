@@ -218,7 +218,7 @@ if __name__ == "__main__":
         print("ERROR: Please provide a test directory: -t dir, --test-dir dir")
         sys.exit(-1)
 
-    if args.command == 'list tests' and args.dir is None:
+    if args.command == 'list' and args.dir is None:
         parser.print_usage()
         print("ERROR: Please provide a test directory -t dir, --test-dir dir")
         sys.exit(-1)
