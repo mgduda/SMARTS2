@@ -69,7 +69,9 @@ def setup_smarts(envFile=None, testDir=None, srcDir=None):
             sys.exit(-1)
 
     env = Environment(envFile)
-    env.parse_file()  # TODO: Handle/report env.yaml file parsing errors here
+    if env.parse_file() == -1:
+        sys.exit(-1)
+
     test_handler = TestRunner(env, testDir, srcDir)
 
     return env, test_handler

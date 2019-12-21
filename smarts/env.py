@@ -41,12 +41,24 @@ class Environment:
             self.env = yaml.safe_load(open(self.envFile))
         except yaml.scanner.ScannerError as error:
             print("ERROR: Could not read", self.envFile, "!")
-            print("ERROR: Most likely a syntax error:\n")
             print(error)
             print("\n")
             return -1
 
         # Do some interal error checking here ... are all the main parts there?
+        if 'Description' not in self.env: # Description section check
+            print("ERROR: The environment.yaml file contained no 'Description' section")
+            print("ERROR: Please add a 'Description' section to: '", self.envFile,"'", sep="")
+            return -1
+        else:
+            pass
+
+        if 'Modsets' not in self.env: # Modset section checks
+            print("ERROR: The environment.yaml file contained no 'Modests' section")
+            print("ERROR: Please add a 'Modsets' section to: '", self.envFile,"'", sep="")
+            return -1
+        else:
+            pass
 
         if self.env['Description']['HPC'] != None:
             self.hpc = self.env['Description']['HPC']
