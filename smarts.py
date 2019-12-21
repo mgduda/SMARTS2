@@ -91,7 +91,6 @@ def list_cmd(args):
     env, test_handler = setup_smarts(envFile, testDir)
 
     if len(args.items) == 1:
-        # TODO: Handle ambigous arguments with this command
         if args.items[0] == 'tests':
             valid_tests, invalid_tests = test_handler.list_tests()
             print_tests(testDir, valid_tests, invalid_tests)
@@ -104,6 +103,10 @@ def list_cmd(args):
             modsets = env.list_modsets()
             print_modsets(modsets, env.name)
             return 0
+        else:
+            print("ERROR: Unkown subcommand: ", args.items[0])
+            args.listParser.print_help()
+            sys.exit(-1)
     if len(args.items) > 1:
         # Print infromation of a specific item, either tests or modsets
         if args.items[0] == 'test':
@@ -199,10 +202,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     args.parser = parser
-
-    # TODO: Also do this for the following:
-    # list tests - Only need the test directory
-    # list modsets - Only need the environment file
+    args.listParser = listParser
+    args.runParser = runParser
 
     if args.command == 'run' and args.src is None:
         parser.print_usage()
