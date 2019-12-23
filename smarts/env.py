@@ -77,22 +77,7 @@ class Environment:
                     print("ERROR: a 'LMOD_CMD' attribute to the description section of: '", self.envFile, "'", sep="")
                     return -1
 
-        if 'Modsets' not in self.env: # Modset section checks
-            print("ERROR: The environment.yaml file contained no 'Modests' section")
-            print("ERROR: Please add a 'Modsets' section to: '", self.envFile,"'", sep="")
-            return -1
-        else:
-            pass
-
-        if self.env['Description']['HPC'] != None:
-            self.hpc = self.env['Description']['HPC']
-        else:
-            self.hpc = None
-
-        self.name = self.env['Description']['Name']
-        self.ncpus = self.env['Description']['Max Cores']
-
-        # See if the lmod command is supported
+        # LMOD Checks - Turn LMOD support on or off
         if 'Modules' in self.env['Description']:
             if self.env['Description']['Modules'] == True:
                 self.lmod_cmd = self.env['Description']['LMOD_CMD']
@@ -106,6 +91,92 @@ class Environment:
             self.lmod_supported = False
         else: # No Modules attribute in env.yaml file - Turn off lmod support
             self.lmod_supported = False
+
+        if 'Modsets' not in self.env: # Modset section checks
+            print("ERROR: The environment.yaml file contained no 'Modests' section")
+            print("ERROR: Please add a 'Modsets' section to: '", self.envFile,"'", sep="")
+            return -1
+        elif self.env['Modsets'] == None:
+            print("ERROR: No Modsets were given!")
+            print("ERROR: Please specify at least one modset under the 'Modsets' section")
+            return -1
+        else: # Check each modset for basic errors:
+            for modsets in list(self.env['Modsets'].keys()):
+                modset = self.env['Modsets'][modsets]
+
+                # Compiler section check
+                if 'compiler' in modset or 'Compiler' in modset:
+                    compiler = modset['compiler']
+                    if ('path' not in compiler and 'Path' not in compiler
+                           and 'module' not in compiler and 'Module' not in compiler):
+                        print("ERROR: No method for specifying the compiler for modset: '", modsets, "'", sep="")
+                        print("ERROR: In the env.yaml file: ", self.envFile)
+                        print("ERROR: Please either use 'path:' or 'module' to specify a compiler")
+                        return -1
+                    if 'module' in compiler and self.lmod_supported == False:
+                        print("ERROR: The compiler for the modset '", modsets, "' was specified with", sep="")
+                        print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
+                        print("ERROR: is set to False or LMOD support for this enviornment is not supported")
+                        print("ERROR: because of an error. Please speicfy the compiler location as a")
+                        print("ERROR: PATH or fix the above warnings")
+                        return -1
+                else:
+                    print("ERROR: No compiler section found for the modset: '", modsets, "'", sep="")
+                    print("ERROR: Please add one to continue")
+                    return -1
+
+                # MPI section check
+                if 'MPI' in modset:
+                    mpi = modset['MPI']
+                    if 'path' not in mpi and 'module' not in mpi and 'PATH' not in mpi:
+                        print("ERROR: In the MPI specification, no 'path' or 'module' was given")
+                        print("ERROR: Please add either a 'path' or a 'module' attribute to specify")
+                        print("ERROR: an MPI installation in the modset:", modsets)
+                        return -1
+                    if 'module' in mpi and self.lmod_supported == False:
+                        print("ERROR: The mpi specification for the modset'", modsets, "' was specified with", sep="")
+                        print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
+                        print("ERROR: is set to False or LMOD support for this enviornment is not supported")
+                        print("ERROR: because of an error. Please speicfy the compiler location as a")
+                        print("ERROR: 'path' or fix the above warnings")
+                        return -1
+
+                # Library section check
+                if 'libs' in modset:
+                    libs = modset['libs']
+                    for lib in libs:
+                        libName = list(lib.keys())[0]
+                        if 'ENV-NAME' in lib and 'value' not in lib:
+                            print("ERROR: The attribute 'ENV_NAME' was given, but no 'value' was")
+                            print("ERROR: given to assign it a value for the library: '", libName, "'.", sep="")
+                            print("ERROR: Please specify a value to assign to ENV_NAME")
+                            return -1
+                        if 'ENV-NAME' not in lib and 'value' in lib:
+                            print("ERROR: The attribute 'value' was given, but 'ENV_NAME' was not given ")
+                            print("ERROR: for the library: '", libName, "'. Please specify ENV_NAME to assign", sep="")
+                            print("ERROR: a value to.")
+                            return -1
+                        if 'ENV-NAME' not in lib and 'value' not in lib and 'module' not in lib:
+                            print("ERROR: No method for specifying the library: '", libName, "'", sep="")
+                            print("ERROR: Please specify a way to load the library with either a 'ENV_NAME',")
+                            print("ERROR: 'value' pair or with 'module'")
+                            return -1
+                        if 'module' in lib and self.lmod_supported == False:
+                            print("ERROR: The library specification for the modset'", modsets, "' was specified with", sep="")
+                            print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
+                            print("ERROR: is set to False or LMOD support for this enviornment is not supported")
+                            print("ERROR: because of an error. Please speicfy the compiler location as a")
+                            print("ERROR: 'path' or fix the above warnings")
+                            return -1
+
+        if self.env['Description']['HPC'] != None:
+            self.hpc = self.env['Description']['HPC']
+        else:
+            self.hpc = None
+
+        self.name = self.env['Description']['Name']
+        self.ncpus = self.env['Description']['Max Cores']
+
 
         return 0;
 
