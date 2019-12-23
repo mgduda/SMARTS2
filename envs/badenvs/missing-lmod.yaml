@@ -1,0 +1,97 @@
+---
+
+################################
+# Reddwarf - MMM 32 Core Machine
+################################
+
+Description:
+  Name: Reddwarf
+  Max Cores: 10
+  Modules: True
+  HPC: False
+
+Modsets:
+
+  ############
+  # GNU-9.1.0
+  ############
+  GNU-9.1.0:
+    name: gnu-9.1.0
+    compiler:
+      name: gnu
+      version: 9.1.0
+      path: /sysdisk2/mcurry/build-gcc-9.1.0/gcc-9.1.0
+      executables:
+        - gcc
+        - gfortran
+        - g++
+    MPI:
+      PATH: /sysdisk2/mcurry/build-gcc-9.1.0/mpich-3.3.1
+      version: 3.3.1
+      executables:
+        - mpicc
+        - mpif90
+        - mpifort
+        - mpiexec
+        - mpirun
+    libs:
+      - p-netcdf:
+        ENV-NAME: PNETCDF
+        value: /users/mcurry/build-gnu-9.1.0/lib
+      - c-netcdf:
+        ENV-NAME: NETCDF
+        value: /users/mcurry/build-gnu-9.1.0/lib
+      - f-netcdf:
+        ENV-NAME: NETCDFF
+        value: /users/mcurry/build-gnu-9.1.0/lib
+      - PIO:
+        ENV-NAME: PIO
+        value: /users/mcurry/build-gnu-9.1.0/lib
+
+  ############
+  # GNU-8.3.0
+  ############
+  GNU-8.3.0:
+    name: gnu-8.3.0
+    compiler:
+      name: gnu
+      version: 8.3.0
+      module: gnu
+      executables:
+        - gcc
+        - gfortran
+        - g++
+    libs:
+      - p-netcdf:
+        module: pnetcdf
+        version: 1.11.2
+      - c-netcdf:
+        module: netcdf 
+        version: 4.7.0
+      - pio:
+        module: pnetcdf
+        version: 2.3.1
+
+  ###############
+  # INTEL-19.0.2
+  ###############
+  INTEL-19.0.2:
+    name: intel-19.0.2
+    compiler:
+      name: intel
+      version: 19.0.2
+      module: intel
+      executables:
+        - ifort
+        - icc
+    libs:
+      - p-netcdf:
+        module: pnetcdf
+        version: 1.11.2
+      - c-netcdf:
+        module: netcdf 
+        version: 4.7.0
+      - pio:
+        module: pnetcdf
+        version: 2.3.1
+        

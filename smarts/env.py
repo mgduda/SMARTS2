@@ -50,8 +50,43 @@ class Environment:
             print("ERROR: The environment.yaml file contained no 'Description' section")
             print("ERROR: Please add a 'Description' section to: '", self.envFile,"'", sep="")
             return -1
-        else:
-            pass
+        else: # Check for individual Description Components
+            description = self.env['Description']
+            if 'Name' not in description:
+                print("ERROR: The environment.yaml 'Description' section contained no 'Name' attribute.")
+                print("ERROR: Please add a 'Name:' attribute to the 'Description' section in the")
+                print("ERROR: environment file: ", self.envFile)
+                return -1
+
+            if 'Max Cores' not in description:
+                print("ERROR: The environment.yaml 'Description' section contained no 'Max Cores' attribute")
+                print("ERROR: to specify the max number of cores to use on this machine.")
+                print("ERROR: Please add a 'Max Cores:' attribute to the 'Description' section in'")
+                print("ERROR: environment file: ", self.envFile)
+                return -1
+            else:
+                if description['Max Cores'] == 0:
+                    print("ERROR:'Max Cores' in the 'Description' section of the env.yaml file")
+                    print("ERROR: was set to zero. Please set to a value >= 1")
+                    return -1
+
+            if 'Modules' in description:
+                if description['Modules'] == True and 'LMOD_CMD' not in description:
+                    print("ERROR: In the 'Description' section of the env.yaml file, the 'Modules:' attribute")
+                    print("ERROR: was set to True, but a 'LMOD_CMD' attribute was not given. Please add")
+                    print("ERROR: a 'LMOD_CMD' attribute to the description section of: '", self.envFile, "'", sep="")
+                    return -1
+                elif description['Modules'] == False and 'LMOD_CMD' in description:
+                    print("WARNING: The 'Modules' attribute in the 'Description' section of the env.yaml file was set ")
+                    print("WARNING: to False, but a LMOD_CMD was specified. SMARTS will not use LMOD")
+                    print("WARNING: for this SMARTS run.")
+                    return -1
+            if ('LMOD_CMD' in description and 'Modules' not in description):
+                print("WARNING: No 'Modules' attribute in the 'Description' section of the env.yaml file was ")
+                print("WARNING: found, but a LMOD_CMD was specified. SMARTS will not use LMOD")
+                print("WARNING: for this SMARTS run.")
+                return -1
+
 
         if 'Modsets' not in self.env: # Modset section checks
             print("ERROR: The environment.yaml file contained no 'Modests' section")

@@ -1,0 +1,14 @@
+---
+
+################################
+# Reddwarf - MMM 32 Core Machine
+################################
+
+
+Description:
+  Name: Reddwarf
+  Max Cores: 10
+  Modules: True
+  LMOD_CMD: /usr/local/lmod/lmod/libexec/lmod
+  HPC: False
+

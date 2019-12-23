@@ -5,13 +5,6 @@
 ################################
 
 
-Description:
-  Name: Reddwarf
-  Max Cores: 12
-  Modules: True
-  LMOD_CMD: /usr/local/lmod/lmod/libexec/lmod
-  HPC: False
-
 Modsets:
 
   ############
@@ -27,15 +20,22 @@ Modsets:
         - gcc
         - gfortran
         - g++
+    MPI:
+      PATH: /sysdisk2/mcurry/build-gcc-9.1.0/mpich-3.3.1
+      version: 3.3.1
+      executables:
+        - mpicc
+        - mpif90
+        - mpifort
+        - mpiexec
+        - mpirun
     libs:
       - p-netcdf:
         ENV-NAME: PNETCDF
         value: /users/mcurry/build-gnu-9.1.0/lib
       - c-netcdf:
-        ENV-NAME: NETCDF oije:
-        LIjl: 
-        :lsij 
-            value: /users/mcurry/build-gnu-9.1.0/lib
+        ENV-NAME: NETCDF
+        value: /users/mcurry/build-gnu-9.1.0/lib
       - f-netcdf:
         ENV-NAME: NETCDFF
         value: /users/mcurry/build-gnu-9.1.0/lib
