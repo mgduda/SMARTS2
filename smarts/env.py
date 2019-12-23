@@ -76,17 +76,6 @@ class Environment:
                     print("ERROR: was set to True, but a 'LMOD_CMD' attribute was not given. Please add")
                     print("ERROR: a 'LMOD_CMD' attribute to the description section of: '", self.envFile, "'", sep="")
                     return -1
-                elif description['Modules'] == False and 'LMOD_CMD' in description:
-                    print("WARNING: The 'Modules' attribute in the 'Description' section of the env.yaml file was set ")
-                    print("WARNING: to False, but a LMOD_CMD was specified. SMARTS will not use LMOD")
-                    print("WARNING: for this SMARTS run.")
-                    return -1
-            if ('LMOD_CMD' in description and 'Modules' not in description):
-                print("WARNING: No 'Modules' attribute in the 'Description' section of the env.yaml file was ")
-                print("WARNING: found, but a LMOD_CMD was specified. SMARTS will not use LMOD")
-                print("WARNING: for this SMARTS run.")
-                return -1
-
 
         if 'Modsets' not in self.env: # Modset section checks
             print("ERROR: The environment.yaml file contained no 'Modests' section")
@@ -104,10 +93,18 @@ class Environment:
         self.ncpus = self.env['Description']['Max Cores']
 
         # See if the lmod command is supported
-        if self.env['Description']['Modules']:
-            self.lmod_supported = True
-            self.lmod_cmd = self.env['Description']['LMOD_CMD']
-        else:
+        if 'Modules' in self.env['Description']:
+            if self.env['Description']['Modules'] == True:
+                self.lmod_cmd = self.env['Description']['LMOD_CMD']
+                self.lmod_supported = True
+            else: # Modules == False
+                self.lmod_supported = False
+        elif 'LMOD_CMD' in self.env['Description'] and 'Modules' not in self.env['Description']:
+            print("WARNING: No 'Modules' attribute in the 'Description' section of the env.yaml file was ")
+            print("WARNING: found, but a LMOD_CMD was specified. SMARTS will not use LMOD")
+            print("WARNING: for this SMARTS run.")
+            self.lmod_supported = False
+        else: # No Modules attribute in env.yaml file - Turn off lmod support
             self.lmod_supported = False
 
         return 0;
