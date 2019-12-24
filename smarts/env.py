@@ -6,32 +6,22 @@ import sys
 import subprocess
 
 class Environment:
+    """ Class Environment - Class for reading and then loading the modsets
+    within an Environment.yaml file """
+
     def __init__(self, envFile, *args, **kwargs):
+        """ Initalize an Environment class with a envFile - Does no checking or
+        parsing. """
         self.envFile = envFile
         self.env = None
         return
 
-    """
-    TODO: Do checking of the env.yaml file:
-        
-    Check for both: 
-        - Description - Produces error
-        - Modests - Produce Warnings
-
-    Description Checks:
-        - Check for max_cores
-        - If modules = True then LMOD_CMD must be set
-        - If HPC = PBS then check there isn't slurm_options and visa versa
-        - If HPC = False and HPC_OPTIONS is present produce warning
-        - 
-    Modests:
-        - If a module command is listed, then check to see if the LMOD_CMD
-          is present in the description
-        - Libraries (if present) - Check to see if they are either modules (w/ optional version) or
-          either a ENV_NAME AND value pair.
-    """
-
     def parse_file(self, *args, **kwargs):
+        """ Load an environment.yaml file. After loaded via yaml.safe_load, the
+        loaded enviornment will be parsed to ensure basic parts of the environment.yaml
+        file.
+
+        On error, this method will return -1 and will return 0 on success """
         if not os.path.isfile(self.envFile):
             print("ERROR: '", self.envFile, "' does not exist!")
             print("ERROR: Please specify a valid yaml file!")
@@ -181,10 +171,12 @@ class Environment:
         return 0;
 
     def list_modsets(self, name=None, *args, **kwargs):
-        # If name is None, list out all modests found in the environment.yaml file,
-        # else, list out the modests that contain name.
-        # Returns a list
+        """ Return a list of modsets found in the parsed environment.yaml file,
+        if name is specified then modset names that contain that name will be returned.
 
+        Keyword arguments:
+        name -- Name to specify specific modset(s) name (String)
+        """
         modsets = self.env['Modsets']
 
         modsetNames = []
@@ -198,19 +190,28 @@ class Environment:
         return modsetNames
 
     def list_modset(self, modset, *args, **kwargs):
-        # List the information of a single modest
-        # This should probably return the yaml dictiony of said modset
+        """ Return a dictionary of the modset, modset, from the environment.yaml
+        file.
+
+        modset - Name of modset to retrieve (String)
+        """
         pass
 
     def list_libraries(self, modset, *args, **kwargs):
-        # List the libraries of a specifiec modset
-        # Returns a list
+        """ Return a list of libraries in the modset, modset from the environment.yaml
+        file.
+
+        modset - Name of modset to retrieve its libraries (string)
+        """
         pass
 
     def _lmod_load(self, module, version=None):
-        # Load module/version using the LMOD command specified in LMOD_CMD in the
-        # environment.yaml description file
-        # If version == None, the default module will be loaded
+        """ Internal function to interface with LMOD to load the module, module via
+        `module load`. If version is specified, that version will try to be loaded.
+
+        module - Name of module to be loaded with `module load` (string)
+        version (optional) - Version number of module to be loaded (string)
+        """
 
         if version == None:
             version = ""
@@ -232,8 +233,12 @@ class Environment:
 
 
     def _load_compiler(self, compiler, *args, **kwargs):
-        # Internal function to load a compiler on a modset
-        # print("DEBUG: In Environment._load_compiler(...)")
+        """ Load a compiler by altering this process PATH environment. This module
+        checks to see if the compiler was loaded successful by running `--version` and
+        checking the version number of the compiler
+
+        compiler - Env.yaml description of a compiler (dict)
+        """
 
         name    = compiler['name']
         version = compiler['version']
@@ -283,8 +288,8 @@ class Environment:
         return True
 
     def _load_mpi(self, modset, *args, **kwargs):
-        # Internal function to add MPI commands to the top of the path, similarly to how
-        # _load_compiler works
+        """ Load an MPI implementation by prepending it to PATH - This function is similar to
+        Environment._load_compiler """
         mpi = modset['MPI']
         cmds = modset['MPI']['executables'] # TODO: This should be checked - In yaml load ??
 
@@ -314,8 +319,8 @@ class Environment:
             # Some MPI exeuctables print out the version for the copmiler they are linked with, so
             # just make sure that they are able to run (for now)
             # TODO: This will also fail if the fork can't find the executable
-            check = subprocess.Popen(cmd, 
-                                     stdout=subprocess.PIPE, 
+            check = subprocess.Popen(cmd,
+                                     stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
             stdout = str(check.stdout.read(), encoding='utf-8')
             stderr = str(check.stderr.read(), encoding='utf-8')
@@ -331,11 +336,17 @@ class Environment:
         return True
         
     def get_modset(self, modsetName, *args, **kwargs):
-        # Return the YAML dictionary representation for the modset modset
+        """ Return the YAML dictionary for the modset, modset 
+
+        modset - Name of modset to retrive (String)
+        """
         return self.env['Modsets'][modsetName]
 
     def _load_library(self, library, *args, **kwargs):
-        # Internal function to load a single library, library
+        """ Internal function to load a library of a modset - This function with either load the
+        library by running `lmod load` (_lmod_load) or will create an environment variable and
+        assign it a value if that is how the library is specified.
+        """
 
         # The library is specified as a lmod module
         if 'module' in library.keys():
@@ -366,8 +377,26 @@ class Environment:
         return True
 
     def load_modset(self, modsetName, *args, **kawrgs):
-        # print("DEBUG: In Environment.load_modset(...)")
-    
+        """ Completely load the modset, modsetName to be used by a single test. This function
+        completely loads a modset (compiler, mpi implementation, and all libraries).
+
+        To load a compiler, this function will alter the PATH environment variable for the current
+        process (single test) and prepend the compiler path to it. If the compiler is specified as
+        a module, it will be loaded via the lmod Python interface (`module python load ...`)
+
+        MPI implementation will be loaded in a similar manner to compilers.
+
+        Both MPI and Compilers will be checked to ensure that the correct version is installed by
+        running the compiler executables specified in the executables section of the compiler or
+        MPI env.yaml sections with `--version` and checking the versions in the env.yaml file match
+        correctly.
+
+        Libraries will be loaded by creating ENV_NAME as an environment variable and assigning to
+        it the value specified in value.
+
+        modsetName -- Name of the modset to be loaded (String)
+        """
+
         # Load a modset
         modset = self.env['Modsets'][modsetName]
         compiler = modset['compiler']
