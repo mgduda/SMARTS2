@@ -8,8 +8,9 @@ from smarts.env import Environment
 from smarts.testRunner import TestRunner
 
 def print_tests(test_directory, valid_tests, invalid_tests):
-    # SMARTS Command Line API print tests function - Print the list of valid 
-    # and invalid lists to the tests
+    """ Command line routine to retrive valid and invalid tests and print
+    them out to the terminal """
+
     print("Tests found in: ", test_directory, ":", sep='')
 
     if len(valid_tests) > 0:
@@ -18,7 +19,7 @@ def print_tests(test_directory, valid_tests, invalid_tests):
             print("  -", tests[0], "--", tests[1])
 
     print()
-    
+
     if len(invalid_tests) > 0:
         print("Invalid tests: (These tests were not able to be loaded)")
         for tests in invalid_tests:
@@ -33,6 +34,7 @@ def print_tests(test_directory, valid_tests, invalid_tests):
     return 0
 
 def print_modsets(modsets, envName):
+    """ Retrive and print the modsets in the environment file specified with -e/--env """
     # SMARTS Command Line API print modset function - Print the list of modsets
     # found in the enviornment.yaml file
     print("Avaliable Modsets on:", envName)
@@ -41,15 +43,15 @@ def print_modsets(modsets, envName):
 
 
 def print_test_info(tests):
-    # SMARTS Command Line API print test info - Print the infromation of
-    # a specific tests
+    """ Retrive and print the infromation of a specifiec test, including its name,
+    description, number of cpus and other information """
     pass
 
 
 def setup_smarts(envFile=None, testDir=None, srcDir=None):
-    # Helper function to Initalize SMARTs classes, specifically the
-    # TestRunner, and the Environment class. If any of the files specified above
-    # do not exists or can't be found, the program will fail
+    """ Helper function to intialize the smarts Environment class and
+    smarts TestRunner - Will fail if any of the above files or directories
+    do not exist """
 
     if not os.path.isfile(envFile):
         print("ERROR: The environment.yaml file does not exist!")
@@ -78,14 +80,14 @@ def setup_smarts(envFile=None, testDir=None, srcDir=None):
 
 
 def list_cmd(args):
-    # SMARTS Command Line API for listing out tests, test-suites, modsets, 
-    # and test infromation
+    """ SMARTS Command Line API for handling the list command passed in to
+    the argparser. """
 
-    testDir = args.dir[0] 
+    testDir = args.dir[0]
     testDir = os.path.abspath(testDir) # Convert relative path into an absolute path
     envFile = args.env[0]
     envFile = os.path.abspath(envFile)
-    
+
     env, test_handler = setup_smarts(envFile, testDir)
 
     if len(args.items) == 1:
@@ -115,12 +117,13 @@ def list_cmd(args):
         elif args.items[0] == 'modset':
             # Print out the infromation for a single modset
             pass
-    
+
     return 0
 
 
 def run_cmd(args):
-    """ Parse the run command """
+    """ SMARTS Command Line API for handling the run command passed in to
+    the argparser. """
     testDir = args.dir[0] # The directory that contains each test
     srcDir = args.src[0]  # The directory that contains the code to be tested
     envFile = args.env[0] # The environment.yaml file
@@ -135,10 +138,9 @@ def run_cmd(args):
 if __name__ == "__main__":
     """ SMARTs Command Line Argument Parsing """
 
-
     parser = argparse.ArgumentParser(prog="smarts",
-                                      description="A regression testing system for MPAS",
-                                      epilog="Don't Panic (This is the Epilog Area)"
+                                     description="A regression testing system for MPAS",
+                                     epilog="Don't Panic (This is the Epilog Area)"
                                     )
 
     parser.add_argument('-e', '--env-file',
@@ -179,18 +181,18 @@ if __name__ == "__main__":
                                        description='Description for list sub-command',
                                        epilog='Epilog for list sub-command')
     listParser.add_argument('items',
-                             help='List items help message',
-                             nargs='+')
+                            help='List items help message',
+                            nargs='+')
     listParser.set_defaults(func=list_cmd)
 
     # Run subcommand
     runParser = subparsers.add_parser('run',
-                                     help="Run a test or a test-suite by name",
-                                     description='Description for run sub-command',
-                                     epilog='Epilog for run sub-command')
+                                      help="Run a test or a test-suite by name",
+                                      description='Description for run sub-command',
+                                      epilog='Epilog for run sub-command')
     runParser.add_argument('items',
-                            help='Run items help message',
-                            nargs='+')
+                           help='Run items help message',
+                           nargs='+')
     runParser.set_defaults(func=run_cmd)
 
     args = parser.parse_args()
