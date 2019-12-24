@@ -30,9 +30,17 @@ INCOMPLETE = "INCOMPLETE"
 
 
 class TestRunner:
+    """ class TestRunner - Class responsible for managing and running tests """
     def __init__(self, env, testDir, srcDir, *args, **kwargs):
-        # The test directory is the directory that holds each test's implementation , not where
-        # they are ran.
+        """ Initalize the TestRunner. After initalization the TestRunner will have two
+        nested-classes, a TestManager (self.manager) and a TestScheduler (self.scheduler),
+        as well as an HPC class (if avaliable)
+
+        Arguments:
+        env     -- An initalized and parsed Environment class - (Class Environment)
+        testDir -- The directory that holds SMARTS test - (String or Pathlike object)
+        srcDir  -- The directory that to be tested - (String or Pathlike object)
+        """
         self.env = env
         self.testDir= testDir
         self.srcDir = srcDir
@@ -59,24 +67,37 @@ class TestRunner:
         self.scheduler = TestScheduler(self, self.testDir, self.srcDir, *args, **kwargs)
 
     def list_tests(self, *args, **kwargs):
-        # List all tests
+        """ Return a list of valid and a list of invalid tests found in the testDir. In the valid
+        test list, each element will contain the launch name and test name. In the invalid tests
+        list, each element will contain the launch name and then the reason it is an invalid tests.
+        """
         return self.manager.list_tests()
 
     def list_test(self, tests, *args, **kwargs):
-        # List a single test
+        """ Return the information of a specific test, including its name, description etc - See
+        TestManager.list_test(...) for more information on this function. """
         print("List test!")
         return self.manager.list_test(tests)
 
     def run_tests(self, tests, env, *args, **kwargs):
+        """ Run all the tests specified in tests - See TestScheduler.run_tests(...) for more
+        information on this function.
+
+        tests -- List of strings specifying tests to run (List of strings)
+        """
         self.scheduler.run_tests(tests)
 
 
 class TestManager:
+    """ Class TestManager - Class for discovering tests in the test directory """
     def __init__(self, test_directory, *args, **kwargs):
         self.test_directory = test_directory
 
     def list_tests(self, *args, **kwargs):
-        # Return a list all the valid and invalid tests
+        """ Return a list of valid and a list of invalid tests found in the testDir. In the valid
+        test list, each element will contain the launch name and test name. In the invalid tests
+        list, each element will contain the launch name and then the reason it is an invalid 
+        tests. """
         verbose = kwargs.get('verbose', 0)
 
         if verbose > 0:
@@ -107,23 +128,21 @@ class TestManager:
         return valid_tests, invalid_tests
 
     def list_test_suites(self, **kwargs):
-        # List all of the available test-suites
+        """ List all of the available test-suites """
         raise NotImplementedError("TestManager.list_test_suites "+NOT_IMPLEMENTED_ERROR)
 
     def list_test(self, tests, **kwargs):
-        # Return the information about a single test or test-suite as a (dictionary or object?)
+        """ Return the information about a single test or test-suite as a
+        (dictionary or object?) """
         raise NotImplementedError("TestManager.list_test "+NOT_IMPLEMENTED_ERROR)
 
     def check_test(self, test, **kwargs):
-        # Check to see if the test suite and test name are on the system
+        """ Check to see if the test suite and test name are on the system """
         raise NotImplementedError("TestManager.check_test"+NOT_IMPLEMENTED_ERROR)
 
 
-""" Class TestSubProcess - Wrapper for individual tests
-
-"""
+""" Class TestSubProcess - Wrapper for individual test to enable management of multiprocessing """
 class TestSubProcess(Process):
-    """ Wrapper around tests which will enable them to be launched as subprocess """
     def __init__(self, test_launch_name, test,
                                          result,
                                          env,
@@ -147,7 +166,7 @@ class TestSubProcess(Process):
         result = result()
         result.start()
         self.result = result.result()
-    
+
     def run(self):
         if self.DEBUG > 1:
             print("DEBUG: Creating directory for:", self.test_launch_name)
@@ -196,7 +215,9 @@ class TestSubProcess(Process):
             return False
 
 
-""" """
+""" The basic Proxy provided by a Multiprocessing Manager does not expose a class's
+attributes. By defining our own NamespaceProxy, we can expose the attributes of our
+result type."""
 class TestProxy(NamespaceProxy):
     _exposed_ = ('__getattribute__', '__setattr__', '__delattr__', 'run')
 
@@ -205,23 +226,25 @@ class TestProxy(NamespaceProxy):
         return callmethod('run', (env, srcDir, testDir,), {'hpc' : hpc})
 
 
-""" """
 class TestScheduler:
+    """ Class TestScheduler - Class responsible for managing resources and launching tests as
+    subprocesses """
 
     def __init__(self, testRunner, testDir, srcDir, *args, **kwargs):
+        """ Initalize a TestScheduler Class
+
+        testRunner - A initialized TestRunner class
+        testDir - The test directory (where tests are stored)
+        srcDir - The source code to test
+        """
         self.manager = testRunner.manager
         self.env = testRunner.env
         self.ncpus = testRunner.env.ncpus
         self.testDir = testDir
         self.srcDir = srcDir
 
-    def _setup_tests(): # Possible function to set up test to take stuff out of run tests
-        pass
-       
-
     def _create_run_directory(self):
-        # If all tests are able to be ran, then create the test directory
-        # smarts.year-mm-dd_hh.mm.ss
+        """ Create a run directory with the structure: run-smarts.year-mm-dd_hh.mm.ss """
         run_directory = 'run-smarts-'
         now = datetime.datetime.now()
         run_directory += now.strftime('%Y-%m-%d-%H.%M.%S')
@@ -231,11 +254,10 @@ class TestScheduler:
             return False
 
         return run_directory
-        
+
     def _get_depends_status(self, test, loaded_tests):
-        # Return a list of booleans that corrospond test's dependencies status (currently either
-        # joined or not)
-        # TODO: See if this returns the correct amount of bools
+        """ Return a list of booleans that correspond test's dependencies status (currently either
+         joined or not) """
         dependency_status = []
 
         if hasattr(test.test, 'dependencies'):
@@ -258,7 +280,10 @@ class TestScheduler:
 
 
     def _update_dependents(self, test, loaded_tests):
-        # Using the result within test, update
+        """ Recursive function to update the decedents of test depending on its result
+        (test.result.result). If a test does not complete, then update its dependencies to be
+        UNSCHEDULED. Then recursively call this function on those tests to update any
+        dependencies they might have. """
         testStatus = test.result.result
         test_name = test.test.test_name
         test_launch_name = test.test.__class__.__name__
@@ -275,16 +300,27 @@ class TestScheduler:
                     continue
 
                 if test_name in t.test.dependencies or test_launch_name in t.test.dependencies:
-                    # If test has failed, mark its dependnents as UNSCHEDULED and then update those
-                    # the depedents of those tests.
-                    print("SMARTS:", t.test_launch_name, " has been unscheduled because one of its depdency failed")
+                    # If test has failed, mark its dependents as UNSCHEDULED and then update those
+                    # the dependents of those tests.
+                    print("SMARTS:", t.test_launch_name, " has been unscheduled because one of its dependency failed")
                     t.status = UNSCHEDULED
                     t.result.result = "INCOMPLETE"
                     self._update_dependents(t, loaded_tests)
 
     def run_tests(self, tests, *args, **kwargs):
-        """ 
+        """ Attempt to run all the tests found in tests. Tests will be ran, if:
 
+        1. They can be loaded successfully
+        2. There is enough resources (CPUS) available for them to be ran
+        3. If all of their decencies complete with the result == PASSED
+
+        Unless one test is a dependency of another, tests will be ran concurrently based 
+        on the number of MAX CORES specified in the environment.yaml file. If a test has
+        dependency, it will only run once they have all completed with the result == PASSED.
+
+        If a test with dependents fail, all of its dependencies will not be ran.
+
+        tests - List of strings of tests run name (String)
         """
 
         self.DEBUG = 0
