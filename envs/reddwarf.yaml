@@ -71,7 +71,7 @@ Modsets:
         module: netcdf 
         version: 4.7.0
       - pio:
-        module: pnetcdf
+        module: pio
         version: 2.3.1
 
   ###############
