@@ -215,16 +215,6 @@ class TestSubProcess(Process):
             return False
 
 
-""" The basic Proxy provided by a Multiprocessing Manager does not expose a class's
-attributes. By defining our own NamespaceProxy, we can expose the attributes of our
-result type."""
-class TestProxy(NamespaceProxy):
-    _exposed_ = ('__getattribute__', '__setattr__', '__delattr__', 'run')
-
-    def run(self, env, srcDir, testDir, hpc=None):
-        callmethod = object.__getattribute__(self, '_callmethod')
-        return callmethod('run', (env, srcDir, testDir,), {'hpc' : hpc})
-
 
 class TestScheduler:
     """ Class TestScheduler - Class responsible for managing resources and launching tests as
