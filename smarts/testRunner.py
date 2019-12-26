@@ -395,6 +395,8 @@ class TestScheduler:
             sys.exit(-1)
         os.chdir(self.run_directory)
 
+        """ Initalize reporter with reporter type """
+        # reporter = initalize_reporter(reporterType)
 
         ################
         # Test Scheduler - TODO: Maybe have this in a new function TestScheduler.scheduler(..) ?
@@ -444,6 +446,11 @@ class TestScheduler:
         # Report Results here
         # Sort tests so they print out in the order they ran
         loaded_tests = sorted(loaded_tests, key=lambda t: int(t.name.split('-')[1]))
+
+        # for test in loaded_tests:
+        #   reporter.add_results(test.result)
+        # 
+        # reporter.generate_report()
 
         print("\n\nTEST RESULTS")
         print("===============================================")

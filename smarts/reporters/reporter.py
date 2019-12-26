@@ -18,3 +18,17 @@ class Result(BaseManager):
     pass
 
 Result.register('result', ResultClass, ResultProxy)
+
+
+def initialize_reporter(reporterType):
+    """ Return an intialized reporter """
+    pass
+
+class BaseReporter:
+    def add_result(result):
+        """ Add a result to a reporter instance """
+        pass
+
+    def genereate_report():
+        """ Genereated the specified report """
+        pass
