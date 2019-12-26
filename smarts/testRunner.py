@@ -189,11 +189,7 @@ class TestSubProcess(Process):
         self.status = FINISHED
         return
 
-    def isInitialized(self):
-        pass
-
     def isRunning(self):
-        # TODO: Make this use self.is_alive()
         if self.status == RUNNING:
             return True
         else:
@@ -204,9 +200,6 @@ class TestSubProcess(Process):
             return True
         else:
             False
-
-    def isJoined(self):
-        pass
 
     def isScheduled(self):
         if self.status == SCHEDULED:
