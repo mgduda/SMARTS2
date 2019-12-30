@@ -61,7 +61,9 @@ class smiol_pgi:
                 result.msg = "Could not find 'smiol_runner_f' when using Modset: "+versions
                 return
 
-            c_run = subprocess.Popen('./smiol_runner_c', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            c_run = subprocess.Popen(['mpiexec_mpt', './smiol_runner_c'], 
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
             c_run_output = c_run.stderr.read()
             c_run.wait()
 
@@ -70,7 +72,9 @@ class smiol_pgi:
                 result.msg = "Recived non-zero return code from './smiol_runner_c' run: ", str(c_run.returncode)
                 return
 
-            f_run = subprocess.Popen('./smiol_runner_f', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            f_run = subprocess.Popen(['mpiexec_mpt', './smiol_runner_f'], 
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.PIPE)
             f_run_output = f_run.stderr.read()
             f_run.wait()
 
