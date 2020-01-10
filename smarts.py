@@ -171,7 +171,6 @@ if __name__ == "__main__":
 
 
     subparsers = parser.add_subparsers(dest='command',
-                                       required=True,
                                        description='command description',
                                        help='Sub-command help message')
 
@@ -200,6 +199,9 @@ if __name__ == "__main__":
     args.listParser = listParser
     args.runParser = runParser
 
+    if not args.command: # If there no commands were passed in print help message
+        parser.print_help()
+        sys.exit(-1)
     if args.command == 'run' and args.src is None:
         parser.print_usage()
         print("ERROR: Please provide a src directory: -s dir, --src-dir dir")
