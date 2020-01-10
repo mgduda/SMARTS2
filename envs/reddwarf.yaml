@@ -38,17 +38,29 @@ Modsets:
         - mpirun
     libs:
       - p-netcdf:
-        ENV-NAME: PNETCDF
+        name: PNETCDF
         value: /users/mcurry/build-gnu-9.1.0/lib
       - c-netcdf:
-        ENV-NAME: NETCDF
+        name: NETCDF
         value: /users/mcurry/build-gnu-9.1.0/lib
       - f-netcdf:
-        ENV-NAME: NETCDFF
+        name: NETCDFF
         value: /users/mcurry/build-gnu-9.1.0/lib
       - PIO:
-        ENV-NAME: PIO
+        name: PIO
         value: /users/mcurry/build-gnu-9.1.0/lib
+      - precision:
+        name: PRECISION
+        value: single
+      - USE_PIO2:
+        name: USE_PIO2
+        value: "true"
+      - MPAS_EXTERNAL_LIBS:
+        name: MPAS_EXTERNAL_LIBS
+        value: "-L${PIO}/lib -L${LIBBASE}/lib/lib -lpio -lpnetcdf -lnetcdf -lhdf5_hl -lhdf5 -ldl -lz"
+      - MPAS_EXTERNAL_INCLUDES:
+        name: MPAS_EXTERNAL_INCLUDES
+        value: "-I${LIBBASE}/lib/include -I${PIO}/lib/include"
 
   ############
   # GNU-8.3.0
