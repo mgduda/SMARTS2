@@ -86,7 +86,7 @@ class mpas_gnu_libs_check:
         # NetCDF - C and Fortran
 
         ## C
-        if os.system('mpicc -o c_netcdf netcdf.c -I$NETCDF/include -I$PNETCDF/include -L$NETCDF/lib -L$PNETCDF/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz'):
+        if os.system('mpicc -o c_netcdf netcdf.c -I$NETCDF/include -I$PNETCDF/include -L$NETCDF/lib -L$PNETCDF/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz -lm'):
             print("Failed to compile netcdf.c with mpicc")
             result.result = "FAILED"
             result.msg = "Failed to compile a C NetCDF program (netcdf.c) with mpicc!"
@@ -117,7 +117,7 @@ class mpas_gnu_libs_check:
 
         ## Fortran
         print("PIO: ", os.environ['PIO'])
-        if os.system('mpif90 -o piof piof.f90 -I$PIO/include -I$NETCDF/include -I$PNETCDF/include -L$PIO/lib -L$NETCDF/lib -L$PNETCDF/lib -lpiof -lpioc -lgptl -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz -lm'):
+        if os.system('mpif90 -o piof piof.f90 -I$PIO/include -I$NETCDF/include -I$PNETCDF/include -L$PIO/lib -L$NETCDF/lib -L$PNETCDF/lib -lpiof -lpio -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lz -lm'):
             print("Failed to compile piof.f90 with mpif90")
             result.result = "FAILED"
             result.msg = "Failed to compile a Fortran PIO program (pio.f90) with mpif90!"
