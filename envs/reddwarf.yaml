@@ -48,7 +48,7 @@ Modsets:
         value: /users/mcurry/build-gnu-9.1.0/lib
       - PIO:
         name: PIO
-        value: /users/mcurry/build-gnu-9.1.0/lib
+        value: /users/mcurry/build-gnu-9.1.0/pio/2.4.3
       - precision:
         name: PRECISION
         value: single
@@ -106,6 +106,6 @@ Modsets:
         module: netcdf 
         version: 4.7.0
       - pio:
-        module: pnetcdf
+        module: pio
         version: 2.3.1
         
