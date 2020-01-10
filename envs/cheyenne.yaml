@@ -5,7 +5,7 @@
 
 Description:
   Name: Cheyenne
-  Max Cores: 1
+  Max Cores: 4
   Modules: True
   LMOD_CMD: /glade/u/apps/ch/opt/lmod/8.1.7/lmod/lmod/libexec/lmod
   HPC: PBS
@@ -44,6 +44,25 @@ Modsets:
       - pio:
         name: PIO
         value: /glade/work/duda/libs-intel19.0.2
+      - external_libs:
+        name: MPAS_EXTERNAL_LIBS
+        value: "-L${NETCDF}/lib -lhdf5_hl -lhdf5 -ldl -lz"
+      - external_includes:
+        name: MPAS_EXTERNAL_INCLUDES
+        value: "-I${NETCDF}/include"
+      - JASPERLIB:
+        name: JASPERLIB
+        value: "/glade/u/home/wrfhelp/UNGRIB_LIBRARIES/lib"
+      - JASPERINC:
+        name: JASPERINC
+        value: /glade/u/home/wrfhelp/UNGRIB_LIBRARIES/include
+      - use_pio2:
+        name: USE_PIO2
+        value: 'true'
+      - precision:
+        name: PRECISION
+        value: single
+
 
 
   ###############
