@@ -219,6 +219,10 @@ if __name__ == "__main__":
         parser.print_usage()
         print("ERROR: Please provide a test directory -t dir, --test-dir dir")
         sys.exit(-1)
+    elif args.command == 'list' and args.env is None:
+        parser.print_usage()
+        print("ERROR: Please provide a environment file: -e env.yaml, --env-file env.yaml")
+        sys.exit(-1)
 
 
     # In conjuction with the .set_defaults(func=x) command, for both the listParser,
