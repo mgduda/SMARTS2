@@ -205,6 +205,7 @@ class Environment:
         """
         pass
 
+
     def _lmod_load(self, module, version=None):
         """ Internal function to interface with LMOD to load the module, module via
         `module load`. If version is specified, that version will try to be loaded.
@@ -225,8 +226,20 @@ class Environment:
                                        shell=True, # TODO: Exploration around shell=True
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
+
+        module_load_stdout = module_load.stdout.read().decode()
+        module_load_stderr = module_load.stderr.read().decode()
+
         # TODO: Information on what exec does
-        exec (module_load.stdout.read())
+        module_load.wait()
+        if module_load.returncode != 0:
+            print("ERROR: Problems calling `lmod load ", module_str, "' see lmod error below",
+                sep='')
+            print(module_load_stdout)
+            print(module_load_stderr)
+            sys.exit(-1)
+
+        exec (module_load_stdout)
 
         # TODO: Explore what happens when errors in this function 
         return True
