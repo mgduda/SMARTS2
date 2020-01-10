@@ -230,15 +230,15 @@ class Environment:
         module_load_stdout = module_load.stdout.read().decode()
         module_load_stderr = module_load.stderr.read().decode()
 
-        # TODO: Information on what exec does
         module_load.wait()
         if module_load.returncode != 0:
-            print("ERROR: Problems calling `lmod load ", module_str, "' see lmod error below",
+            print("ERROR: Problems calling `lmod load ", module_str, "' see lmod error below:",
                 sep='')
             print(module_load_stdout)
             print(module_load_stderr)
-            sys.exit(-1)
+            return False
 
+        # TODO: Information on what exec does
         exec (module_load_stdout)
 
         # TODO: Explore what happens when errors in this function 
@@ -371,8 +371,8 @@ class Environment:
                 version = ""
 
             if not self._lmod_load(module, version):
-                print("ERROR: Could not load the library: ", mpi_name, mpi_version)
-                print("ERROR: using lmod. Is it specified correctly?")
+                print("ERROR: Could not load the library: ", library['module'], version)
+                print("ERROR: Is it specified correctly?")
                 return False
         # The library is specified as a environment variable
         elif 'name' in library.keys():
@@ -419,17 +419,15 @@ class Environment:
         # print("DEBUG: Compiler name: ", compiler['name'])
 
         if not self._load_compiler(compiler):
-            print("ERROR: There was an error loading the modset! ", modset)
-            sys.exit(-1)
+            return False
 
         if "MPI" in modset.keys():
-            # Load MPI executables if this modset has it
-            self._load_mpi(modset)
+            if not self._load_mpi(modset):
+                return False
 
         for library in modset['libs']:
             if not self._load_library(library):
-                print("ERROR: There was an error loading this library! ", library)
-                sys.exit(-1)
+                return False
 
         print("SMARTS: Loaded modset: '", modsetName, "' succsfully!", sep='')
 
