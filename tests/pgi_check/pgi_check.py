@@ -7,15 +7,15 @@ class pgi_check:
     nCPUs = 1
 
     def run(self, env, result, src_dir, test_dir, hpc=None, *args, **kwargs):
-        # Load GNU Compilers
 
-        pgi_compilers = env.list_modsets(name="PGI")
-        if len(pgi_compilers) == 0:
+        # Load PGI Compilers
+        pgi_modsets = env.list_modsets(name="PGI")
+        if len(pgi_modsets) == 0:
             result.result = "FAILED"
-            result.msg = "Could not load any GNU Modsets!"
+            result.msg = "Could not load any PGI Modsets!"
             return -1
 
-        for versions in pgi_compilers:
+        for versions in pgi_modsets:
             # For each compiler, test to see if we can make, and compile simple
             # C and Fortran programs
             modset = env.load_modset(versions)
