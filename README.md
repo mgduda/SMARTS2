@@ -152,9 +152,9 @@ You can use these arguments to help write your tests.
 ## Beta Release - v0.5
 * ~~Dependencies~~
 * ~~Schedules Test Concurrently~~
-* Load Modules Completely
-   * Loads compilers, mpi implementations and libraries
-   * Needs a little more testing
+* ~~Load Modules Completely~~
+   * ~~Loads compilers, mpi implementations and libraries~~
+   * ~~Needs a little more testing~~
 * ~~Runs tests and reports their status via stdout (but does not call a reporter)~~
 * Requirements Document mostly finished
 * Basic env.yaml error checking - Check for missing parts of the passed in env.yaml file
