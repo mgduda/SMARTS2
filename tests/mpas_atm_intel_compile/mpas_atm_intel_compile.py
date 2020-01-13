@@ -1,7 +1,7 @@
 import os
 import shutil
 
-class mpas_intel_compile:
+class mpas_atm_intel_compile:
     test_name = "MPAS Atmosphere Intel Compile"
     test_description = "Compile MPAS Atmosphere with Intel (If possible)"
     dependencies = ['intel_check', 'mpas_intel_libs_check']
