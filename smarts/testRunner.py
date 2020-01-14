@@ -125,6 +125,9 @@ class TestManager:
                 except Exception as e:
                     invalid_tests.append([testFile, e])
 
+        valid_tests.sort()
+        invalid_tests.sort()
+
         return valid_tests, invalid_tests
 
     def list_test_suites(self, **kwargs):
