@@ -3,6 +3,7 @@
 *.pyt
 *.egg
 *.swp
+*.swo
 *.egg_info
 build/
 dist
