@@ -5,7 +5,7 @@ import os
 import sys
 import argparse
 from smarts.env import Environment
-from smarts.testRunner import TestRunner
+from smarts.testManager import TestManager
 
 def print_tests(test_directory, valid_tests, invalid_tests):
     """ Command line routine to retrive valid and invalid tests and print
@@ -50,7 +50,7 @@ def print_test_info(tests):
 
 def setup_smarts(envFile=None, testDir=None, srcDir=None):
     """ Helper function to intialize the smarts Environment class and
-    smarts TestRunner - Will fail if any of the above files or directories
+    smarts TestManager - Will fail if any of the above files or directories
     do not exist """
 
     if not os.path.isfile(envFile):
@@ -74,7 +74,7 @@ def setup_smarts(envFile=None, testDir=None, srcDir=None):
     if env.parse_file() == -1:
         sys.exit(-1)
 
-    test_handler = TestRunner(env, testDir, srcDir)
+    test_handler = TestManager(env, testDir, srcDir)
 
     return env, test_handler
 
