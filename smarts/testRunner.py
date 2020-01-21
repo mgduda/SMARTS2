@@ -1,18 +1,12 @@
 """ SMARTs Test Runner - With Test Manager and Test Scheduler """
 import os
-import string
 import sys
 import datetime
 from importlib import import_module
-
 from multiprocessing import Process
-from multiprocessing.managers import BaseManager, NamespaceProxy
 
 from smarts.reporters.reporter import Result
 
-from importlib import import_module
-from multiprocessing import Process
-from multiprocessing.managers import BaseManager, NamespaceProxy
 
 NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
