@@ -10,7 +10,6 @@ from smarts.reporters.reporter import Result
 
 NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
-INITIALIZED = "INITIALIZED"
 SCHEDULED = "SCHEDULED"
 UNSCHEDULED = "UNSCHEDULED"
 RUNNING = "RUNNING"
@@ -156,7 +155,6 @@ class TestSubProcess(Process):
         self.hpc = hpc
         self.args = args
         self.kwargs = kwargs
-        self.status = INITIALIZED
         self.DEBUG = kwargs.get('DEBUG', 0)
 
         # Initalize the Result Class - I.E. Start the Result Manager
@@ -349,7 +347,6 @@ class TestScheduler:
                                          self.srcDir,
                                          self.testDir,
                                          self.hpc)
-            testProcess.status = INITIALIZED
             loaded_tests.append(testProcess)
 
 
