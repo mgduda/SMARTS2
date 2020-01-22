@@ -157,7 +157,7 @@ You can use these arguments to help write your tests.
    * ~~Needs a little more testing~~
 * ~~Runs tests and reports their status via stdout (but does not call a reporter)~~
 * Requirements Document mostly finished
-* Basic env.yaml error checking - Check for missing parts of the passed in env.yaml file
+* ~~Basic env.yaml error checking - Check for missing parts of the passed in env.yaml file~~
 
 ## v1.0 Release
 * Test Suites - Ability to group tests into suites via a suites.yaml file or by grouping
