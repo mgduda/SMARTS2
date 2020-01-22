@@ -92,6 +92,9 @@ Modsets:
         module: netcdf-mpi
       - pio:
         module: pio
+      - USE_PIO2:
+        name: USE_PIO2
+        value: 'true'
 
 
   ###############
