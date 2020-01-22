@@ -45,7 +45,24 @@ def print_modsets(modsets, envName):
 def print_test_info(tests):
     """ Retrive and print the infromation of a specifiec test, including its name,
     description, number of cpus and other information """
-    pass
+
+    tests = sorted(tests, key=lambda t: t['runName'])
+
+    for test in tests:
+        if 'error' in test.keys():
+            print("ERROR LOADING:", test['runName'])
+            print(test['error'])
+        else:
+            print("    Run name:", test['runName'])
+            print("   Long name:", test['longName'])
+            print(" Description:", test['description'])
+            print("       ncpus:", test['ncpus'])
+            print('Dependencies:', test['dependencies'])
+
+        if len(tests) != 1:
+            print('------------------------------------------------------')
+
+    return 0
 
 
 def setup_smarts(envFile=None, testDir=None, srcDir=None):
@@ -109,9 +126,8 @@ def list_cmd(args):
             sys.exit(-1)
     if len(args.items) > 1:
         # Print infromation of a specific item, either tests or modsets
-        if args.items[0] == 'test':
-            print("Calling test_handler.list_test")
-            test = test_handler.list_test(args.items)
+        if args.items[0] == 'test' or args.items[0] == 'tests':
+            tests = test_handler.list_test(args.items)
             print_test_info(tests)
             return 0
         elif args.items[0] == 'modset':
