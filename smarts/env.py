@@ -136,28 +136,28 @@ class Environment:
                     libs = modset['libs']
                     for lib in libs:
                         libName = list(lib.keys())[0]
-                    #    if 'ENV_NAME' in lib and 'value' not in lib and 'module' not in lib:
-                    #        print("ERROR: The attribute 'ENV_NAME' was given, but no 'value' was")
-                    #        print("ERROR: given to assign it a value for the library: '", libName, "'.", sep="")
-                    #        print("ERROR: Please specify a value to assign to ENV_NAME")
-                    #        return -1
-                    #    if 'ENV_NAME' not in lib and 'value' in lib:
-                    #        print("ERROR: The attribute 'value' was given, but 'ENV_NAME' was not given ")
-                    #        print("ERROR: for the library: '", libName, "'. Please specify ENV_NAME to assign", sep="")
-                    #        print("ERROR: a value to.")
-                    #        return -1
-                    #    if 'ENV_NAME' not in lib and 'value' not in lib and 'module' not in lib:
-                    #        print("ERROR: No method for specifying the library: '", libName, "'", sep="")
-                    #        print("ERROR: Please specify a way to load the library with either a 'ENV_NAME',")
-                    #        print("ERROR: 'value' pair or with 'module'")
-                    #        return -1
-                    #    if 'module' in lib and self.lmod_supported == False:
-                    #        print("ERROR: The library specification for the modset'", modsets, "' was specified with", sep="")
-                    #        print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
-                    #        print("ERROR: is set to False or LMOD support for this enviornment is not supported")
-                    #        print("ERROR: because of an error. Please speicfy the compiler location as a")
-                    #        print("ERROR: 'path' or fix the above warnings")
-                    #        return -1
+                        if 'name' in lib and 'value' not in lib and 'module' not in lib:
+                            print("ERROR: The attribute 'ENV_NAME' was given, but no 'value' was")
+                            print("ERROR: given to assign it a value for the library: '", libName, "'.", sep="")
+                            print("ERROR: Please specify a value to assign to ENV_NAME")
+                            return -1
+                        if 'name' not in lib and 'value' in lib:
+                            print("ERROR: The attribute 'value' was given, but 'ENV_NAME' was not given ")
+                            print("ERROR: for the library: '", libName, "'. Please specify ENV_NAME to assign", sep="")
+                            print("ERROR: a value to.")
+                            return -1
+                        if 'name' not in lib and 'value' not in lib and 'module' not in lib:
+                            print("ERROR: No method for specifying the library: '", libName, "'", sep="")
+                            print("ERROR: Please specify a way to load the library with either a 'ENV_NAME',")
+                            print("ERROR: 'value' pair or with 'module'")
+                            return -1
+                        if 'module' in lib and self.lmod_supported == False:
+                            print("ERROR: The library specification for the modset'", modsets, "' was specified with", sep="")
+                            print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
+                            print("ERROR: is set to False or LMOD support for this enviornment is not supported")
+                            print("ERROR: because of an error. Please speicfy the compiler location as a")
+                            print("ERROR: 'path' or fix the above warnings")
+                            return -1
 
         if self.env['Description']['HPC'] != None:
             self.hpc = self.env['Description']['HPC']
@@ -204,7 +204,6 @@ class Environment:
         modset - Name of modset to retrieve its libraries (string)
         """
         pass
-
 
     def _lmod_load(self, module, version=None):
         """ Internal function to interface with LMOD to load the module, module via
@@ -348,12 +347,6 @@ class Environment:
 
         return True
         
-    def get_modset(self, modsetName, *args, **kwargs):
-        """ Return the YAML dictionary for the modset, modset 
-
-        modset - Name of modset to retrive (String)
-        """
-        return self.env['Modsets'][modsetName]
 
     def _load_library(self, library, *args, **kwargs):
         """ Internal function to load a library of a modset - This function with either load the

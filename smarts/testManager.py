@@ -1,22 +1,15 @@
 """ SMARTs Test Runner - With Test Manager and Test Scheduler """
 import os
-import string
 import sys
 import datetime
 from importlib import import_module
-
 from multiprocessing import Process
-from multiprocessing.managers import BaseManager, NamespaceProxy
 
 from smarts.reporters.reporter import Result
 
-from importlib import import_module
-from multiprocessing import Process
-from multiprocessing.managers import BaseManager, NamespaceProxy
 
 NOT_IMPLEMENTED_ERROR = "IS NOT YET IMPLEMENTED"
 
-INITIALIZED = "INITIALIZED"
 SCHEDULED = "SCHEDULED"
 UNSCHEDULED = "UNSCHEDULED"
 RUNNING = "RUNNING"
@@ -27,121 +20,6 @@ ERROR = "ERROR"
 PASSED = "PASSED"
 FAILED = "FAILED"
 INCOMPLETE = "INCOMPLETE"
-
-
-class TestRunner:
-    """ class TestRunner - Class responsible for managing and running tests """
-    def __init__(self, env, testDir, srcDir, *args, **kwargs):
-        """ Initalize the TestRunner. After initalization the TestRunner will have two
-        nested-classes, a TestManager (self.manager) and a TestScheduler (self.scheduler),
-        as well as an HPC class (if avaliable)
-
-        Arguments:
-        env     -- An initalized and parsed Environment class - (Class Environment)
-        testDir -- The directory that holds SMARTS test - (String or Pathlike object)
-        srcDir  -- The directory that to be tested - (String or Pathlike object)
-        """
-        self.env = env
-        self.testDir= testDir
-        self.srcDir = srcDir
-        _debug_ = 0
-
-        # Based on if the env we have is an HPC or not, initalize the HPC
-        if env.hpc == True:
-            # Initalize HPC
-            raise NotImplementedError("HPC COMPATABLITY IS NOT YET IMPLEMENTED")
-            pass
-        else:
-            self.hpc = None
-
-        # At a Python's program startup, sys.path is set to PYTHONPATH (and not 
-        # the normal PATH variable). Similar to the PATH environment, it is the locations
-        # Python will search for importing Python modules.
-        # To find the user created tests, append it to the front.
-        if _debug_ > 0:
-            print("TestRunner: Test directory is: ", self.testDir)
-
-        sys.path.insert(0, self.testDir)
-
-        self.manager = TestManager(self.testDir)
-        self.scheduler = TestScheduler(self, self.testDir, self.srcDir, *args, **kwargs)
-
-    def list_tests(self, *args, **kwargs):
-        """ Return a list of valid and a list of invalid tests found in the testDir. In the valid
-        test list, each element will contain the launch name and test name. In the invalid tests
-        list, each element will contain the launch name and then the reason it is an invalid tests.
-        """
-        return self.manager.list_tests()
-
-    def list_test(self, tests, *args, **kwargs):
-        """ Return the information of a specific test, including its name, description etc - See
-        TestManager.list_test(...) for more information on this function. """
-        print("List test!")
-        return self.manager.list_test(tests)
-
-    def run_tests(self, tests, env, *args, **kwargs):
-        """ Run all the tests specified in tests - See TestScheduler.run_tests(...) for more
-        information on this function.
-
-        tests -- List of strings specifying tests to run (List of strings)
-        """
-        self.scheduler.run_tests(tests)
-
-
-class TestManager:
-    """ Class TestManager - Class for discovering tests in the test directory """
-    def __init__(self, test_directory, *args, **kwargs):
-        self.test_directory = test_directory
-
-    def list_tests(self, *args, **kwargs):
-        """ Return a list of valid and a list of invalid tests found in the testDir. In the valid
-        test list, each element will contain the launch name and test name. In the invalid tests
-        list, each element will contain the launch name and then the reason it is an invalid 
-        tests. """
-        verbose = kwargs.get('verbose', 0)
-
-        if verbose > 0:
-            print("TestManager: list_tests() - Listing tests found in:", self.test_directory)
-
-        valid_tests = []
-        invalid_tests = []
-        for tests in os.listdir(self.test_directory):
-            if os.path.isdir(os.path.join(self.test_directory, tests)):
-
-                testFile = os.path.join(tests, tests).replace('/', '.')
-                runName = testFile
-
-                # Translate the directory path into what Python wants for its import_module command
-                if '.' in runName:
-                    runName = testFile.split('.')[0]
-
-                try:
-                    mod = import_module(testFile)
-                    try:
-                        test = getattr(mod, tests)
-                        valid_tests.append([runName, test.test_name])
-                    except:
-                        invalid_tests.append([runName, "Could not load this test's attributes"])
-                except Exception as e:
-                    invalid_tests.append([testFile, e])
-
-        valid_tests.sort()
-        invalid_tests.sort()
-
-        return valid_tests, invalid_tests
-
-    def list_test_suites(self, **kwargs):
-        """ List all of the available test-suites """
-        raise NotImplementedError("TestManager.list_test_suites "+NOT_IMPLEMENTED_ERROR)
-
-    def list_test(self, tests, **kwargs):
-        """ Return the information about a single test or test-suite as a
-        (dictionary or object?) """
-        raise NotImplementedError("TestManager.list_test "+NOT_IMPLEMENTED_ERROR)
-
-    def check_test(self, test, **kwargs):
-        """ Check to see if the test suite and test name are on the system """
-        raise NotImplementedError("TestManager.check_test"+NOT_IMPLEMENTED_ERROR)
 
 
 """ Class TestSubProcess - Wrapper for individual test to enable management of multiprocessing """
@@ -162,7 +40,6 @@ class TestSubProcess(Process):
         self.hpc = hpc
         self.args = args
         self.kwargs = kwargs
-        self.status = INITIALIZED
         self.DEBUG = kwargs.get('DEBUG', 0)
 
         # Initalize the Result Class - I.E. Start the Result Manager
@@ -212,22 +89,89 @@ class TestSubProcess(Process):
 
 
 
-class TestScheduler:
-    """ Class TestScheduler - Class responsible for managing resources and launching tests as
-    subprocesses """
+class TestManager:
+    """ class TestRunner - Class responsible for managing and running tests """
+    def __init__(self, env, testDir, srcDir, *args, **kwargs):
+        """ Initalize the TestRunner. After initalization the TestRunner will have two
+        nested-classes, a TestManager (self) and a TestScheduler (self),
+        as well as an HPC class (if avaliable)
 
-    def __init__(self, testRunner, testDir, srcDir, *args, **kwargs):
-        """ Initalize a TestScheduler Class
-
-        testRunner - A initialized TestRunner class
-        testDir - The test directory (where tests are stored)
-        srcDir - The source code to test
+        Arguments:
+        env     -- An initalized and parsed Environment class - (Class Environment)
+        testDir -- The directory that holds SMARTS test - (String or Pathlike object)
+        srcDir  -- The directory that to be tested - (String or Pathlike object)
         """
-        self.manager = testRunner.manager
-        self.env = testRunner.env
-        self.ncpus = testRunner.env.ncpus
-        self.testDir = testDir
+        self.env = env
+        self.testDir= testDir
         self.srcDir = srcDir
+        _debug_ = 0
+
+        # Based on if the env we have is an HPC or not, initalize the HPC
+        if env.hpc == True:
+            # Initalize HPC
+            raise NotImplementedError("HPC COMPATABLITY IS NOT YET IMPLEMENTED")
+            pass
+        else:
+            self.hpc = None
+
+        # At a Python's program startup, sys.path is set to PYTHONPATH (and not 
+        # the normal PATH variable). Similar to the PATH environment, it is the locations
+        # Python will search for importing Python modules.
+        # To find the user created tests, append it to the front.
+        if _debug_ > 0:
+            print("TestRunner: Test directory is: ", self.testDir)
+
+        sys.path.insert(0, self.testDir)
+
+    def list_tests(self, *args, **kwargs):
+        """ Return a list of valid and a list of invalid tests found in the testDir. In the valid
+        test list, each element will contain the launch name and test name. In the invalid tests
+        list, each element will contain the launch name and then the reason it is an invalid 
+        tests. """
+        verbose = kwargs.get('verbose', 0)
+
+        if verbose > 0:
+            print("TestManager: list_tests() - Listing tests found in:", self.testDir)
+
+        valid_tests = []
+        invalid_tests = []
+        for tests in os.listdir(self.testDir):
+            if os.path.isdir(os.path.join(self.testDir, tests)):
+
+                testFile = os.path.join(tests, tests).replace('/', '.')
+                runName = testFile
+
+                # Translate the directory path into what Python wants for its import_module command
+                if '.' in runName:
+                    runName = testFile.split('.')[0]
+
+                try:
+                    mod = import_module(testFile)
+                    try:
+                        test = getattr(mod, tests)
+                        valid_tests.append([runName, test.test_name])
+                    except:
+                        invalid_tests.append([runName, "Could not load this test's attributes"])
+                except Exception as e:
+                    invalid_tests.append([testFile, e])
+
+        valid_tests.sort()
+        invalid_tests.sort()
+
+        return valid_tests, invalid_tests
+
+    def list_test_suites(self, **kwargs):
+        """ List all of the available test-suites """
+        raise NotImplementedError("TestManager.list_test_suites "+NOT_IMPLEMENTED_ERROR)
+
+    def list_test(self, tests, **kwargs):
+        """ Return the information about a single test or test-suite as a
+        (dictionary or object?) """
+        raise NotImplementedError("TestManager.list_test "+NOT_IMPLEMENTED_ERROR)
+
+    def check_test(self, test, **kwargs):
+        """ Check to see if the test suite and test name are on the system """
+        raise NotImplementedError("TestManager.check_test"+NOT_IMPLEMENTED_ERROR)
 
     def _create_run_directory(self):
         """ Create a run directory with the structure: run-smarts.year-mm-dd_hh.mm.ss """
@@ -313,14 +257,14 @@ class TestScheduler:
 
         num_tests = len(tests)
         finished = 0
-        avaliable_cpus = self.ncpus
+        avaliable_cpus = self.env.ncpus
         self.hpc = None
         run = True
         requested_test_names = tests
 
 
         """ Check to see if all the tests are valid tests """
-        avaliable_tests, invalid_tests = self.manager.list_tests()
+        avaliable_tests, invalid_tests = self.list_tests()
         launch_names = [t[0] for t in avaliable_tests]
         test_names = [t[1] for t in avaliable_tests]
 
@@ -355,7 +299,6 @@ class TestScheduler:
                                          self.srcDir,
                                          self.testDir,
                                          self.hpc)
-            testProcess.status = INITIALIZED
             loaded_tests.append(testProcess)
 
 
