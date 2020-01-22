@@ -165,9 +165,57 @@ class TestManager:
         raise NotImplementedError("TestManager.list_test_suites "+NOT_IMPLEMENTED_ERROR)
 
     def list_test(self, tests, **kwargs):
-        """ Return the information about a single test or test-suite as a
-        (dictionary or object?) """
-        raise NotImplementedError("TestManager.list_test "+NOT_IMPLEMENTED_ERROR)
+        """ Return a list of dictionaries that describe the requested tests"""
+        testNames = tests
+        testInfo = []
+
+        for test in os.listdir(self.testDir):
+            if test in testNames:
+                if os.path.isdir(os.path.join(self.testDir, test)):
+                    testFile = os.path.join(test, test).replace('/', '.')
+
+                    if '.' in testFile:
+                        runName = testFile.split('.')[0]
+
+                    try: # Import the test
+                        testMod = import_module(testFile)
+                        try:
+                            testMod = getattr(testMod, test)
+                        except Exception as e:
+                            testMod = e
+                    except Exception as e:
+                        testMod = e
+
+                    if hasattr(testMod, 'test_name'):
+                        longName = getattr(testMod, 'test_name')
+                    else:
+                        longName = None
+                    if hasattr(testMod, 'test_description'):
+                        description = getattr(testMod, 'test_description')
+                    else:
+                        description = None
+                    if hasattr(testMod, 'nCPUs'):
+                        ncpus = getattr(testMod, 'nCPUs')
+                    else:
+                        ncpus = None
+                    if hasattr(testMod, 'dependencies'):
+                        dependencies = getattr(testMod, 'dependencies')
+                    else:
+                        dependencies = None
+
+                    if isinstance(testMod, Exception):
+                        testInfo.append({'runName' : runName,
+                                         'error' : testMod
+                                        })
+                    else:
+                        testInfo.append({'runName' : runName,
+                                         'longName': longName,
+                                         'description' : description,
+                                         'ncpus' : ncpus,
+                                         'dependencies' : dependencies
+                                        })
+
+        return testInfo
 
     def check_test(self, test, **kwargs):
         """ Check to see if the test suite and test name are on the system """
