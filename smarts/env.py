@@ -205,7 +205,6 @@ class Environment:
         """
         pass
 
-
     def _lmod_load(self, module, version=None):
         """ Internal function to interface with LMOD to load the module, module via
         `module load`. If version is specified, that version will try to be loaded.
@@ -348,12 +347,6 @@ class Environment:
 
         return True
         
-    def get_modset(self, modsetName, *args, **kwargs):
-        """ Return the YAML dictionary for the modset, modset 
-
-        modset - Name of modset to retrive (String)
-        """
-        return self.env['Modsets'][modsetName]
 
     def _load_library(self, library, *args, **kwargs):
         """ Internal function to load a library of a modset - This function with either load the
