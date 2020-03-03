@@ -362,14 +362,17 @@ class TestManager:
 
                 for dep in test.test.dependencies:
                     if dep not in requested_test_names:
-                        print("ERROR: The dependency '", dep, "' was not requested to run!", sep="")
-                        print("ERROR: Please specify it to run!")
-                        sys.exit(-1)
+                        # Instead of failing, load the test and add it to loaded tests and
+                        # requested_test_names
+                        test = self.load_test(dep)
+                        loaded_tests.append(test)
+                        # Add the test name to requested_test_names so we can ensure other test
+                        # that have this test as its dependencies are notified that its loaded
+                        requested_test_names.append(dep)
                     else:
                         continue
             else:
                 continue
-
 
         """ Check to see if this test does not require more resources then whats available """
         for test in loaded_tests:
