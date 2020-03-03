@@ -285,6 +285,24 @@ class TestManager:
                     t.result.result = "INCOMPLETE"
                     self._update_dependents(t, loaded_tests)
 
+
+    def load_test(self, test_launch_name):
+        """ Import test_launch_name. This function will import a test, and will wrap it in a
+        TestSubProccess, which will then be returned. """
+        # TODO: Try except here
+        module = import_module(test_launch_name+'.'+test_launch_name)
+        test = getattr(module, test_launch_name) # Get the test from the module
+        test = test() # Initialize the test
+
+        testProcess = TestSubProcess(test_launch_name,
+                                     test,
+                                     Result,
+                                     self.env,
+                                     self.srcDir,
+                                     self.testDir,
+                                     self.hpc)
+        return testProcess
+
     def run_tests(self, tests, *args, **kwargs):
         """ Attempt to run all the tests found in tests. Tests will be ran, if:
 
@@ -334,21 +352,7 @@ class TestManager:
         initialized """
         loaded_tests = []
         for test_launch_name in tests:
-            # TODO: Try except here
-            module = import_module(test_launch_name+'.'+test_launch_name)
-            test = getattr(module, test_launch_name) # get the test from the module
-            test = test() # Initialize the test
-
-            print("SMARTS: ", test.test_name, "is scheduled to run!")
-
-            testProcess = TestSubProcess(test_launch_name, test,
-                                         Result,
-                                         self.env,
-                                         self.srcDir,
-                                         self.testDir,
-                                         self.hpc)
-            loaded_tests.append(testProcess)
-
+            loaded_tests.append(self.load_test(test_launch_name))
 
         """ Check to see if this tests dependencies (if it has any) are scheduled to run """
         for test in loaded_tests:
