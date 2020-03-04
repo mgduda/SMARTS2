@@ -356,32 +356,34 @@ class TestManager:
         run = True
         requested_test_names = tests
 
-        """ Check to see if all the tests are valid tests """
-        for test in tests:
-            if not self.validate_test(test):
-                sys.exit(-1)
-
-        """ Import and initialize each test - Exit if any Test requested is fails to be 
-        initialized """
+        """ Import and initialize each test - If a test has any dependents (that are not specified)
+        then automatically load the tests, which will cause it to be added to loaded_tests """
         loaded_tests = []
         for test_launch_name in tests:
-            loaded_tests.append(self.load_test(test_launch_name))
-
-        """ Check to see if this tests dependencies (if it has any) are scheduled to run """
-        for test in loaded_tests:
-            if hasattr(test.test, 'dependencies'):
-                if not test.test.dependencies: # test.test.dependencies == None
-                    continue
-
-                for dep in test.test.dependencies:
-                    if dep not in requested_test_names:
-                        print("ERROR: The dependency '", dep, "' was not requested to run!", sep="")
-                        print("ERROR: Please specify it to run!")
-                        sys.exit(-1)
-                    else:
-                        continue
+            if self.validate_test(test_launch_name):
+                test = self.load_test(test_launch_name)
+                loaded_tests.append(test)
             else:
-                continue
+                sys.exit(-1)
+
+            # Load the test dependencies if it has any
+            if hasattr(test.test, 'dependencies'):
+                if test.test.dependencies: # Load dep if dependencies != None
+                    for dependent in test.test.dependencies:
+                        if dependent not in tests:
+                            # Append it to tests so it will be loaded
+                            print("SMARTS:'", dependent, "' is a dependency for '", test.test_launch_name, "' and will be loaded", sep='')
+                            tests.append(dependent)
+
+            # Check to see if this test does not require more resources then whats available
+            if test.test.nCPUs > avaliable_cpus:
+                print("ERROR: The test '", test.test.test_name, " requires more cpus the available!", sep='')
+                print("ERROR: The machine: '", self.env.name, "' has ", avaliable_cpus, " cpus available", sep='')
+                print("ERROR: And '", test.test.test_name, "' requested: ", test.test.nCPUs, sep='')
+                sys.exit(-1)
+
+            # If tests pass all the checks above, then set its status to SCHEDULED
+            test.status = SCHEDULED
 
 
         """ Check to see if this test does not require more resources then whats available """
