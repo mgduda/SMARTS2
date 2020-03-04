@@ -105,6 +105,9 @@ class TestManager:
         self.testDir= testDir
         self.srcDir = srcDir
         _debug_ = 0
+        self.avaliable_tests = None
+        self.invalid_tests = None
+        self.launch_names = None
 
         # Based on if the env we have is an HPC or not, initalize the HPC
         if env.hpc == True:
@@ -285,6 +288,31 @@ class TestManager:
                     t.result.result = "INCOMPLETE"
                     self._update_dependents(t, loaded_tests)
 
+    def validate_test(self, test):
+        """ Validate a test. If a test is valid, return True, if it is not, print an error message
+        the reason why it is invalid and return False.
+
+        """
+        if not self.avaliable_tests and not self.invalid_tests:
+            self.avaliable_tests, self.invalid_tests = self.list_tests()
+            self.launch_names = [t[0] for t in self.avaliable_tests]
+            self.test_names = [t[1] for t in self.avaliable_tests]
+
+        if test not in self.launch_names and test not in self.test_names:
+            # This test was invalid - I.E. syntax, wrong format etc
+            for invalid in self.invalid_tests:
+                if test in invalid[0]:
+                    print("ERROR: The test, '", test, "' could not be loaded!", sep="")
+                    print("ERROR:", invalid[1])
+                    return False
+
+            # Could not find test - Test name
+            print("ERROR: '", test, "' is not a test that could be found within:", sep="")
+            print("ERROR:", os.path.abspath(self.testDir))
+            return False
+        else:
+            return True
+
     def run_tests(self, tests, *args, **kwargs):
         """ Attempt to run all the tests found in tests. Tests will be ran, if:
 
@@ -310,24 +338,9 @@ class TestManager:
         run = True
         requested_test_names = tests
 
-
         """ Check to see if all the tests are valid tests """
-        avaliable_tests, invalid_tests = self.list_tests()
-        launch_names = [t[0] for t in avaliable_tests]
-        test_names = [t[1] for t in avaliable_tests]
-
         for test in tests:
-            if test not in launch_names and test not in test_names:
-                # This test was invalid - I.E. syntax, wrong format etc
-                for invalid in invalid_tests:
-                    if test in invalid[0]:
-                        print("ERROR: The test, '", test, "' could not be loaded!", sep="")
-                        print("ERROR:", invalid[1])
-                        sys.exit(-1)
-
-                # Could not find test - Test name
-                print("ERROR: '", test, "' is not a test that could be found within:", sep="")
-                print("ERROR:", os.path.abspath(self.testDir))
+            if not self.validate_test(test):
                 sys.exit(-1)
 
         """ Import and initialize each test - Exit if any Test requested is fails to be 
