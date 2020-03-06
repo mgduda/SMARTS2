@@ -1,5 +1,9 @@
 \documentclass[11pt]{report}
 
+\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+\usepackage{color}
+
 \setlength{\topmargin}{0in}
 \setlength{\headheight}{0in}
 \setlength{\headsep}{0in}
@@ -7,6 +11,46 @@
 \setlength{\textwidth}{6.5in}
 \setlength{\evensidemargin}{0in}
 \setlength{\oddsidemargin}{0in}
+
+
+\newcommand\YAMLcolonstyle{\color{red}\mdseries}
+\newcommand\YAMLkeystyle{\color{black}\bfseries}
+\newcommand\YAMLvaluestyle{\color{blue}\mdseries}
+
+\makeatletter
+
+% here is a macro expanding to the name of the language
+% (handy if you decide to change it further down the road)
+\newcommand\language@yaml{yaml}
+
+\expandafter\expandafter\expandafter\lstdefinelanguage
+\expandafter{\language@yaml}
+{
+keywords={true,false,null,y,n},
+keywordstyle=\color{darkgray}\bfseries,
+basicstyle=\YAMLkeystyle,                   % assuming a key comes first
+sensitive=false,
+comment=[l]{\#},
+morecomment=[s]{/*}{*/},
+commentstyle=\color{purple}\ttfamily,
+stringstyle=\YAMLvaluestyle\ttfamily,
+moredelim=[l][\color{orange}]{\&},
+moredelim=[l][\color{magenta}]{*},
+moredelim=**[il][\YAMLcolonstyle{:}\YAMLvaluestyle]{:}, % switch to value style at :
+morestring=[b]',
+morestring=[b]",
+literate =    {---}{{\ProcessThreeDashes}}3
+              {>}{{\textcolor{red}\textgreater}}1
+              {|}{{\textcolor{red}\textbar}}1
+              {\ -\ }{{\mdseries\ -\ }}3,
+}
+
+% switch to key style at EOL
+\lst@AddToHook{EveryLine}{\ifx\lst@language\language@yaml\YAMLkeystyle\fi}
+\makeatother
+
+\newcommand\ProcessThreeDashes{\llap{\color{cyan}\mdseries-{-}-}}
+
 
 \begin{document}
 \title{SMARTS - Simple MPAS Atmosphere Regression Testing System}
@@ -19,6 +63,23 @@
 
 This document is a placeholder for a future user document for SMARTS.
 
+\begin{lstlisting}[language=yaml]
+// example.yaml
+Description:
+    Name: Cheyenne
+    Max Cores: 4
+    Modules: True
+    LMOD_CMD: /path/to/lmod_cmd
+    HPC: PBS
+
+Modsets:
+    Libs:
+        - One
+        - Two
+        - Three
+\end{lstlisting}
+
+
 \chapter{Envrionment.yaml Machine Specification}
 
 \chapter{The Environment Class}
@@ -26,5 +87,6 @@ This document is a placeholder for a future user document for SMARTS.
 \chapter{Creating Tests}
 
 \chapter{Command Line Interface - smparts.py}
+
 
 \end{document}
