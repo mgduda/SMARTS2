@@ -105,6 +105,9 @@ class TestManager:
         self.testDir= testDir
         self.srcDir = srcDir
         _debug_ = 0
+        self.avaliable_tests = None
+        self.invalid_tests = None
+        self.launch_names = None
 
         # Based on if the env we have is an HPC or not, initalize the HPC
         if env.hpc == True:
@@ -285,6 +288,49 @@ class TestManager:
                     t.result.result = "INCOMPLETE"
                     self._update_dependents(t, loaded_tests)
 
+    def validate_test(self, test):
+        """ Validate a test. If a test is valid, return True, if it is not, print an error message
+        the reason why it is invalid and return False.
+
+        """
+        if not self.avaliable_tests and not self.invalid_tests:
+            self.avaliable_tests, self.invalid_tests = self.list_tests()
+            self.launch_names = [t[0] for t in self.avaliable_tests]
+            self.test_names = [t[1] for t in self.avaliable_tests]
+
+        if test not in self.launch_names and test not in self.test_names:
+            # This test was invalid - I.E. syntax, wrong format etc
+            for invalid in self.invalid_tests:
+                if test in invalid[0]:
+                    print("ERROR: The test, '", test, "' could not be loaded!", sep="")
+                    print("ERROR:", invalid[1])
+                    return False
+
+            # Could not find test - Test name
+            print("ERROR: '", test, "' is not a test that could be found within:", sep="")
+            print("ERROR:", os.path.abspath(self.testDir))
+            return False
+        else:
+            return True
+
+    def load_test(self, test_launch_name):
+        """ Import test_launch_name. This function will import a test, and will wrap it in a
+        TestSubProccess, which will then be returned. """
+        # TODO: Try except here
+        module = import_module(test_launch_name+'.'+test_launch_name)
+        test = getattr(module, test_launch_name) # Get the test from the module
+        test = test() # Initialize the test
+
+        testProcess = TestSubProcess(test_launch_name,
+                                     test,
+                                     Result,
+                                     self.env,
+                                     self.srcDir,
+                                     self.testDir,
+                                     self.hpc)
+        return testProcess
+
+
     def run_tests(self, tests, *args, **kwargs):
         """ Attempt to run all the tests found in tests. Tests will be ran, if:
 
@@ -310,61 +356,34 @@ class TestManager:
         run = True
         requested_test_names = tests
 
-
-        """ Check to see if all the tests are valid tests """
-        avaliable_tests, invalid_tests = self.list_tests()
-        launch_names = [t[0] for t in avaliable_tests]
-        test_names = [t[1] for t in avaliable_tests]
-
-        for test in tests:
-            if test not in launch_names and test not in test_names:
-                # This test was invalid - I.E. syntax, wrong format etc
-                for invalid in invalid_tests:
-                    if test in invalid[0]:
-                        print("ERROR: The test, '", test, "' could not be loaded!", sep="")
-                        print("ERROR:", invalid[1])
-                        sys.exit(-1)
-
-                # Could not find test - Test name
-                print("ERROR: '", test, "' is not a test that could be found within:", sep="")
-                print("ERROR:", os.path.abspath(self.testDir))
-                sys.exit(-1)
-
-        """ Import and initialize each test - Exit if any Test requested is fails to be 
-        initialized """
+        """ Import and initialize each test - If a test has any dependents (that are not specified)
+        then automatically load the tests, which will cause it to be added to loaded_tests """
         loaded_tests = []
         for test_launch_name in tests:
-            # TODO: Try except here
-            module = import_module(test_launch_name+'.'+test_launch_name)
-            test = getattr(module, test_launch_name) # get the test from the module
-            test = test() # Initialize the test
-
-            print("SMARTS: ", test.test_name, "is scheduled to run!")
-
-            testProcess = TestSubProcess(test_launch_name, test,
-                                         Result,
-                                         self.env,
-                                         self.srcDir,
-                                         self.testDir,
-                                         self.hpc)
-            loaded_tests.append(testProcess)
-
-
-        """ Check to see if this tests dependencies (if it has any) are scheduled to run """
-        for test in loaded_tests:
-            if hasattr(test.test, 'dependencies'):
-                if not test.test.dependencies: # test.test.dependencies == None
-                    continue
-
-                for dep in test.test.dependencies:
-                    if dep not in requested_test_names:
-                        print("ERROR: The dependency '", dep, "' was not requested to run!", sep="")
-                        print("ERROR: Please specify it to run!")
-                        sys.exit(-1)
-                    else:
-                        continue
+            if self.validate_test(test_launch_name):
+                test = self.load_test(test_launch_name)
+                loaded_tests.append(test)
             else:
-                continue
+                sys.exit(-1)
+
+            # Load the test dependencies if it has any
+            if hasattr(test.test, 'dependencies'):
+                if test.test.dependencies: # Load dep if dependencies != None
+                    for dependent in test.test.dependencies:
+                        if dependent not in tests:
+                            # Append it to tests so it will be loaded
+                            print("SMARTS:'", dependent, "' is a dependency for '", test.test_launch_name, "' and will be loaded", sep='')
+                            tests.append(dependent)
+
+            # Check to see if this test does not require more resources then whats available
+            if test.test.nCPUs > avaliable_cpus:
+                print("ERROR: The test '", test.test.test_name, " requires more cpus the available!", sep='')
+                print("ERROR: The machine: '", self.env.name, "' has ", avaliable_cpus, " cpus available", sep='')
+                print("ERROR: And '", test.test.test_name, "' requested: ", test.test.nCPUs, sep='')
+                sys.exit(-1)
+
+            # If tests pass all the checks above, then set its status to SCHEDULED
+            test.status = SCHEDULED
 
 
         """ Check to see if this test does not require more resources then whats available """
