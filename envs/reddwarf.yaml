@@ -4,7 +4,6 @@
 # Reddwarf - MMM 32 Core Machine
 ################################
 
-
 Description:
   Name: Reddwarf
   Max Cores: 10
@@ -19,93 +18,102 @@ Modsets:
   ############
   GNU-9.1.0:
     name: gnu-9.1.0
-    compiler:
-      name: gnu
-      version: 9.1.0
-      path: /sysdisk2/mcurry/build-gcc-9.1.0/gcc-9.1.0
-      executables:
+    Compiler:
+      Name: gnu
+      Version: 9.1.0
+      Path: /sysdisk2/mcurry/build-gcc-9.1.0/gcc-9.1.0
+      Executables:
         - gcc
         - gfortran
         - g++
     MPI:
-      PATH: /sysdisk2/mcurry/build-gcc-9.1.0/mpich-3.3.1
+      Path: /sysdisk2/mcurry/build-gcc-9.1.0/mpich-3.3.1
       version: 3.3.1
-      executables:
+      Executables:
         - mpicc
         - mpif90
         - mpifort
         - mpiexec
         - mpirun
-    libs:
+    Libs:
       - p-netcdf:
-        name: PNETCDF
-        value: /users/mcurry/build-gnu-9.1.0/lib
+        Name: PNETCDF
+        Value: /users/mcurry/build-gnu-9.1.0/lib
       - c-netcdf:
-        name: NETCDF
-        value: /users/mcurry/build-gnu-9.1.0/lib
+        Name: NETCDF
+        Value: /users/mcurry/build-gnu-9.1.0/lib
       - f-netcdf:
-        name: NETCDFF
-        value: /users/mcurry/build-gnu-9.1.0/lib
+        Name: NETCDFF
+        Value: /users/mcurry/build-gnu-9.1.0/lib
       - PIO:
-        name: PIO
-        value: /users/mcurry/build-gnu-9.1.0/pio/2.4.3
+        Name: PIO
+        Value: /users/mcurry/build-gnu-9.1.0/pio/2.4.3
       - precision:
-        name: PRECISION
-        value: single
+        Name: PRECISION
+        Value: single
       - USE_PIO2:
-        name: USE_PIO2
-        value: "true"
+        Name: USE_PIO2
+        Value: "true"
       - MPAS_EXTERNAL_LIBS:
-        name: MPAS_EXTERNAL_LIBS
-        value: "-L${PIO}/lib -L${LIBBASE}/lib/lib -lpio -lpnetcdf -lnetcdf -lhdf5_hl -lhdf5 -ldl -lz"
+        Name: MPAS_EXTERNAL_LIBS
+        Value: "-L${PIO}/lib -L${LIBBASE}/lib/lib -lpio -lpnetcdf -lnetcdf -lhdf5_hl -lhdf5 -ldl -lz"
       - MPAS_EXTERNAL_INCLUDES:
-        name: MPAS_EXTERNAL_INCLUDES
-        value: "-I${LIBBASE}/lib/include -I${PIO}/lib/include"
+        Name: MPAS_EXTERNAL_INCLUDES
+        Value: "-I${LIBBASE}/lib/include -I${PIO}/lib/include"
 
   ############
   # GNU-8.3.0
   ############
   GNU-8.3.0:
     name: gnu-8.3.0
-    compiler:
-      name: gnu
-      version: 8.3.0
-      module: gnu
-      executables:
+    Compiler:
+      Name: gnu
+      Version: 8.3.0
+      Module: gnu
+      Executables:
         - gcc
         - gfortran
         - g++
-    libs:
+    Libs:
       - p-netcdf:
-        module: pnetcdf
-        version: 1.11.2
+        Module: pnetcdf
+        Version: 1.11.2
       - c-netcdf:
-        module: netcdf 
-        version: 4.7.0
+        Module: netcdf 
+        Version: 4.7.0
       - pio:
-        module: pio
-        version: 2.3.1
+        Module: pio
+        Version: 2.3.1
 
   ###############
   # INTEL-19.0.2
   ###############
   INTEL-19.0.2:
     name: intel-19.0.2
-    compiler:
-      name: intel
-      version: 19.0.2
-      module: intel
-      executables:
+    Compiler:
+      Name: intel
+      Version: 19.0.2
+      Module: intel
+      Executables:
         - ifort
         - icc
-    libs:
+    MPI:
+      Module: openmpi
+      Version: 4.0.1
+      Executables:
+        - mpicc
+        - mpif90
+        - mpifort
+        - mpiexec
+        - mpirun
+    Libs:
       - p-netcdf:
-        module: pnetcdf
-        version: 1.11.2
+        Module: pnetcdf
+        Version: 1.11.2
       - c-netcdf:
-        module: netcdf 
-        version: 4.7.0
+        Module: netcdf 
+        Version: 4.7.0
       - pio:
-        module: pio
-        version: 2.3.1
+        Module: pio
+        Version: 2.3.1
         
