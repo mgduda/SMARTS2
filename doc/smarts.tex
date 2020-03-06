@@ -79,6 +79,22 @@ Modsets:
         - Three
 \end{lstlisting}
 
+\begin{lstlisting}[language=Python]
+\\ example_test.py
+import time
+
+class example_test:
+    test_name = "Example Test"
+    test_description = "This test makes a file and checks to see if it was" \
+                       "created or not"
+    nCPUs = 1
+    dependencies = [None]
+
+    def run(self, env, result, src_dir, test_dir, hpc):
+        pass
+
+\end{lstlisting}
+
 
 \chapter{Envrionment.yaml Machine Specification}
 
