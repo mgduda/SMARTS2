@@ -95,69 +95,89 @@ class Environment:
                 modset = self.env['Modsets'][modsets]
 
                 # Compiler section check
-                if 'compiler' in modset or 'Compiler' in modset:
-                    compiler = modset['compiler']
-                    if ('path' not in compiler and 'Path' not in compiler
-                           and 'module' not in compiler and 'Module' not in compiler):
+                if 'Compiler' in modset:
+                    compiler = modset['Compiler']
+                    if 'Name' not in compiler:
+                        print("ERROR: 'Name' was not found in the 'Compiler' section for Modset")
+                        print("ERROR: '", modsets, "'", sep='')
+                        return -1
+                    if 'Version' not in compiler:
+                        print("ERROR: 'Version' was not found in the 'Compiler' section for Modset")
+                        print("ERROR: '", modsets, "'", sep='')
+                        return -1
+                    if 'Path' not in compiler and 'Module' not in compiler:
                         print("ERROR: No method for specifying the compiler for modset: '", modsets, "'", sep="")
                         print("ERROR: In the env.yaml file: ", self.envFile)
-                        print("ERROR: Please either use 'path:' or 'module' to specify a compiler")
+                        print("ERROR: Please either use 'Path:' or 'Module' to specify a compiler")
                         return -1
-                    if 'module' in compiler and self.lmod_supported == False:
-                        print("ERROR: The compiler for the modset '", modsets, "' was specified with", sep="")
-                        print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
-                        print("ERROR: is set to False or LMOD support for this enviornment is not supported")
-                        print("ERROR: because of an error. Please speicfy the compiler location as a")
-                        print("ERROR: PATH or fix the above warnings")
+                    if 'Module' in compiler and self.lmod_supported == False:
+                        print("ERROR: The 'Compiler' for the modset '", modsets, "' was specified with", sep="")
+                        print("ERROR: 'Module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
+                        print("ERROR: is set to False.")
+                        return -1
+                    if 'Executables' not in compiler:
+                        print("ERROR: 'Executables' not found in compiler for modset: '", modsets, "'", sep="")
                         return -1
                 else:
-                    print("ERROR: No compiler section found for the modset: '", modsets, "'", sep="")
+                    print("ERROR: No 'Compiler' section found for the modset: '", modsets, "'", sep="")
                     print("ERROR: Please add one to continue")
                     return -1
 
                 # MPI section check
                 if 'MPI' in modset:
                     mpi = modset['MPI']
-                    if 'path' not in mpi and 'module' not in mpi and 'PATH' not in mpi:
+                    if 'Path' not in mpi and 'Module' not in mpi:
                         print("ERROR: In the MPI specification, no 'path' or 'module' was given")
                         print("ERROR: Please add either a 'path' or a 'module' attribute to specify")
                         print("ERROR: an MPI installation in the modset:", modsets)
                         return -1
-                    if 'module' in mpi and self.lmod_supported == False:
+                    if 'Module' in mpi and self.lmod_supported == False:
                         print("ERROR: The mpi specification for the modset'", modsets, "' was specified with", sep="")
                         print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
                         print("ERROR: is set to False or LMOD support for this enviornment is not supported")
                         print("ERROR: because of an error. Please speicfy the compiler location as a")
                         print("ERROR: 'path' or fix the above warnings")
                         return -1
-
+                    if 'Executables' not in mpi:
+                        print("ERROR: 'Executables' was not found in the MPI section for the modset:")
+                        print("ERROR: '", modsets, "'", sep='')
+                        return -1
                 # Library section check
-                if 'libs' in modset:
-                    libs = modset['libs']
+                if 'Libs' in modset:
+                    libs = modset['Libs']
                     for lib in libs:
                         libName = list(lib.keys())[0]
-                        if 'name' in lib and 'value' not in lib and 'module' not in lib:
-                            print("ERROR: The attribute 'ENV_NAME' was given, but no 'value' was")
+                        if ('Name' in lib and 'Value' not in lib):
+                            print("ERROR: The attribute 'Name' was given, but no 'Value' was")
                             print("ERROR: given to assign it a value for the library: '", libName, "'.", sep="")
-                            print("ERROR: Please specify a value to assign to ENV_NAME")
+                            print("ERROR: Please specify a Value to associate with Name:")
+                            print("ERROR: ```")
+                            print("ERROR: Name:")
+                            print("ERROR: Value:")
+                            print("ERROR: ```")
                             return -1
-                        if 'name' not in lib and 'value' in lib:
-                            print("ERROR: The attribute 'value' was given, but 'ENV_NAME' was not given ")
-                            print("ERROR: for the library: '", libName, "'. Please specify ENV_NAME to assign", sep="")
-                            print("ERROR: a value to.")
+                        if ('Name' not in lib and 'Value' in lib):
+                            print("ERROR: The attribute 'Value' was given, but 'Name' was not given ")
+                            print("ERROR: for the library: '", libName, "'. Please specify Name to assign", sep="")
+                            print("ERROR: a Value to it.")
+                            print("ERROR: ```")
+                            print("ERROR: Name: ENV_NAME")
+                            print("ERROR: Value: value")
+                            print("ERROR: ```")
                             return -1
-                        if 'name' not in lib and 'value' not in lib and 'module' not in lib:
+                        if 'Name' not in lib and 'Value' not in lib and 'Module' not in lib:
                             print("ERROR: No method for specifying the library: '", libName, "'", sep="")
-                            print("ERROR: Please specify a way to load the library with either a 'ENV_NAME',")
-                            print("ERROR: 'value' pair or with 'module'")
+                            print("ERROR: Please specify a way to load the library with either a")
+                            print("ERROR: 'Name', 'Value' pair or with 'Module' and 'Version'")
                             return -1
-                        if 'module' in lib and self.lmod_supported == False:
+                        if 'Module' in lib and self.lmod_supported == False:
                             print("ERROR: The library specification for the modset'", modsets, "' was specified with", sep="")
-                            print("ERROR: 'module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
-                            print("ERROR: is set to False or LMOD support for this enviornment is not supported")
-                            print("ERROR: because of an error. Please speicfy the compiler location as a")
-                            print("ERROR: 'path' or fix the above warnings")
+                            print("ERROR: 'Module', but 'Modules' in the 'Description' section of '", self.envFile, "'", sep="")
+                            print("ERROR: is set to False or LMOD support for this enviornment is not supported.")
                             return -1
+                else:
+                    print("ERROR: 'Libs' section was not found in the modset: '", modsets,"'", sep='')
+                    return -1
 
         if self.env['Description']['HPC'] != None:
             self.hpc = self.env['Description']['HPC']
@@ -252,12 +272,12 @@ class Environment:
         compiler - Env.yaml description of a compiler (dict)
         """
 
-        name    = compiler['name']
-        version = compiler['version']
-        cmds    = compiler['executables']
+        name    = compiler['Name']
+        version = compiler['Version']
+        cmds    = compiler['Executables']
 
-        if 'module' in compiler.keys():
-            compiler_module = compiler['module']
+        if 'Module' in compiler.keys():
+            compiler_module = compiler['Module']
             if self.lmod_supported:
                 # Load the compiler using LMOD
                 if not self._lmod_load(compiler_module, version):
@@ -274,8 +294,8 @@ class Environment:
                 print("ERROR: modules=true was not set to true. ")
                 print("ERROR: Please see the environment.yaml specification for using lmod")
                 return False
-        elif 'path' in compiler.keys(): # Load the compiler via its PATH specification
-            os.environ['PATH'] = compiler['path']+'/bin/'+':'+os.environ['PATH']
+        elif 'Path' in compiler.keys(): # Load the compiler via its PATH specification
+            os.environ['PATH'] = compiler['Path']+'/bin/'+':'+os.environ['PATH']
         else: 
             print("ERROR: We don't know the method used to load this compiler!")
             sys.exit(-1)
@@ -303,15 +323,15 @@ class Environment:
         """ Load an MPI implementation by prepending it to PATH - This function is similar to
         Environment._load_compiler """
         mpi = modset['MPI']
-        cmds = modset['MPI']['executables'] # TODO: This should be checked - In yaml load ??
+        cmds = modset['MPI']['Executables'] # TODO: This should be checked - In yaml load ??
 
         # Load the MPI implementation depending on if its a module or a path specification
-        if 'module' in mpi.keys():
-            mpi_module = mpi['module']
+        if 'Module' in mpi.keys():
+            mpi_module = mpi['Module']
     
             # Version not necessary with LMOD commands
-            if 'version' in mpi: 
-                mpi_version = mpi['version']
+            if 'Version' in mpi: 
+                mpi_version = mpi['Version']
             else:
                 mpi_version = None
 
@@ -320,8 +340,8 @@ class Environment:
                 print("ERROR: Could not load the mpi implementation: ", mpi_name, mpi_version)
                 print("ERROR: using lmod. Is it specified correctly?")
                 return False
-        elif 'path' in mpi.keys():
-            os.environ['PATH'] = modset['path']+'/bin/'+':'+os.environ['PATH']
+        elif 'Path' in mpi.keys():
+            os.environ['PATH'] = mpi['Path']+'/bin/'+':'+os.environ['PATH']
 
         # See if the MPI_PATH/bin exists
         #  - Then try and run the mpi executables
@@ -355,29 +375,29 @@ class Environment:
         """
 
         # The library is specified as a lmod module
-        if 'module' in library.keys():
-            module = library['module']
+        if 'Module' in library.keys():
+            module = library['Module']
 
-            if 'version' in library.keys():
-                version = library['version']
+            if 'Version' in library.keys():
+                version = library['Version']
             else:
                 version = ""
 
             if not self._lmod_load(module, version):
-                print("ERROR: Could not load the library: ", library['module'], version)
+                print("ERROR: Could not load the library: ", library['Module'], version)
                 print("ERROR: Is it specified correctly?")
                 return False
         # The library is specified as a environment variable
-        elif 'name' in library.keys():
-            if 'value' in library.keys():
-                env_name = library['name']
-                value = library['value']
-                
+        elif 'Name' in library.keys():
+            if 'Value' in library.keys():
+                env_name = library['Name']
+                value = library['Value']
+
                 print("SMARTS: Setting the env variable:", env_name, "to value:", value)
                 os.environ[env_name] = value
                 print("SMARTS: Environment variable is: ", os.environ[env_name])
             else:
-                print("ERROR: For the library", library['name'], "does not have a maching value name")
+                print("ERROR: For the library", library['Name'], "does not have a maching value name")
                 return False
 
         return True
@@ -405,7 +425,7 @@ class Environment:
 
         # Load a modset
         modset = self.env['Modsets'][modsetName]
-        compiler = modset['compiler']
+        compiler = modset['Compiler']
 
         # print("DEBUG: Requested modset is: ", modset)
         # print("DEBUG: Compiler is: ", compiler)
@@ -418,7 +438,7 @@ class Environment:
             if not self._load_mpi(modset):
                 return False
 
-        for library in modset['libs']:
+        for library in modset['Libs']:
             if not self._load_library(library):
                 return False
 
