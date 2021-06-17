@@ -1,0 +1,25 @@
+<streams>
+<immutable_stream filename_template="x1.40962.init.nc" input_interval="initial_only" name="input" type="input" />
+
+<immutable_stream filename_template="restart.$Y-$M-$D_$h.$m.$s.nc" input_interval="initial_only" name="restart" output_interval="5_00:00:00" type="input;output" />
+
+<stream filename_template="daig-ijlij" name="output" output_interval="never!" type="output">
+
+	<file name="stream_list.atmosphere.output" />
+</stream>
+
+<stream filename_template="diag.$Y-$M-$D_$h.$m.$s.nc" name="diagnostics" output_interval="3:00:00" type="output">
+
+	<file name="stream_list.atmosphere.diagnostics" />
+</stream>
+
+<stream filename_interval="none" filename_template="x1.40962.sfc_update.nc" input_interval="none" name="surface" type="input">
+
+	<file name="stream_list.atmosphere.surface" />
+</stream>
+
+<immutable_stream filename_interval="none" filename_template="x1.40962.AmB.$Y-$M-$D_$h.$m.$s.nc" input_interval="initial_only" name="iau" packages="iau" type="input" />
+
+<immutable_stream filename_interval="input_interval" filename_template="lbc.$Y-$M-$D_$h.$m.$s.nc" input_interval="3:00:00" name="lbc_in" packages="limited_area" type="input" />
+
+</streams>

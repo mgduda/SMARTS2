@@ -1,0 +1,183 @@
+----------------------------------------------------------------------
+Beginning MPAS-atmosphere Output Log File for task       0 of      36
+    Opened at 2020/09/17 10:16:00
+----------------------------------------------------------------------
+
+ 
+ Using default single-precision reals
+ 
+ Reading namelist from file namelist.atmosphere
+ *** Encountered an issue while attempting to read namelist record assimilation
+     The following values will be used for variables in this record:
+ 
+         config_jedi_da = F
+ 
+ 
+ ----- Setting up physics suite 'mesoscale_reference' -----
+ 
+     config_microp_scheme       = mp_wsm6
+     config_convection_scheme   = cu_ntiedtke
+     config_pbl_scheme          = bl_ysu
+     config_gwdo_scheme         = bl_ysu_gwdo
+     config_radt_cld_scheme     = cld_fraction
+     config_radt_lw_scheme      = off
+     config_radt_sw_scheme      = off
+     config_sfclayer_scheme     = sf_monin_obukhov
+     config_lsm_scheme          = noah
+ 
+ ----- Setting up package variables -----
+ 
+     mp_kessler_in           = F
+     mp_thompson_in          = F
+     mp_wsm6_in              = T
+     cu_grell_freitas_in     = F
+     cu_kain_fritsch_in      = F
+     cu_tiedtke_in           = T
+     bl_mynn_in              = F
+     bl_ysu_in               = T
+ 
+ Reading streams configuration from file streams.atmosphere
+ Found mesh stream with filename template x1.40962.grid.nc
+ Using default io_type for mesh stream
+  ** Attempting to bootstrap MPAS framework using stream: input
+ Bootstrapping framework with mesh fields from input file 'x1.40962.grid.nc'
+WARNING: Attribute file_id not found in x1.40962.grid.nc
+WARNING:   Using '' for the previous file_id.
+WARNING: Attribute parent_id not found in x1.40962.grid.nc
+WARNING:   Setting parent_id to ''
+WARNING: Attribute mesh_spec not found in x1.40962.grid.nc
+WARNING:   Setting mesh_spec to '0.0'
+  * Requested field rainprod is deactivated due to packages, or is a scratch variable.
+  * Requested field evapprod is deactivated due to packages, or is a scratch variable.
+  * Requested field nt_c is deactivated due to packages, or is a scratch variable.
+  * Requested field mu_c is deactivated due to packages, or is a scratch variable.
+  * Requested field nca is deactivated due to packages, or is a scratch variable.
+  * Requested field cubot is deactivated due to packages, or is a scratch variable.
+  * Requested field cutop is deactivated due to packages, or is a scratch variable.
+  * Requested field w0avg is deactivated due to packages, or is a scratch variable.
+  * Requested field qcg is deactivated due to packages, or is a scratch variable.
+  * Requested field sh3d is deactivated due to packages, or is a scratch variable.
+  * Requested field qke is deactivated due to packages, or is a scratch variable.
+  * Requested field qke_adv is deactivated due to packages, or is a scratch variable.
+  * Requested field cov is deactivated due to packages, or is a scratch variable.
+  * Requested field qsq is deactivated due to packages, or is a scratch variable.
+  * Requested field tsq is deactivated due to packages, or is a scratch variable.
+  * Requested field tke_pbl is deactivated due to packages, or is a scratch variable.
+  * Requested field el_pbl is deactivated due to packages, or is a scratch variable.
+  * Requested field ch is deactivated due to packages, or is a scratch variable.
+  * Requested field k22_shallow is deactivated due to packages, or is a scratch variable.
+  * Requested field kbcon_shallow is deactivated due to packages, or is a scratch variable.
+  * Requested field ktop_shallow is deactivated due to packages, or is a scratch variable.
+  * Requested field ktop_deep is deactivated due to packages, or is a scratch variable.
+  * Requested field xmb_total is deactivated due to packages, or is a scratch variable.
+  * Requested field xmb_shallow is deactivated due to packages, or is a scratch variable.
+  * Requested field qc_cu is deactivated due to packages, or is a scratch variable.
+  * Requested field qi_cu is deactivated due to packages, or is a scratch variable.
+  * Requested field rqrcuten is deactivated due to packages, or is a scratch variable.
+  * Requested field rqscuten is deactivated due to packages, or is a scratch variable.
+  * Requested field rniblten is deactivated due to packages, or is a scratch variable.
+  * Requested field u_amb is deactivated due to packages, or is a scratch variable.
+  * Requested field rho_amb is deactivated due to packages, or is a scratch variable.
+  * Requested field theta_amb is deactivated due to packages, or is a scratch variable.
+  * Requested field lbc_u is deactivated due to packages, or is a scratch variable.
+  * Requested field lbc_w is deactivated due to packages, or is a scratch variable.
+  * Requested field lbc_rho is deactivated due to packages, or is a scratch variable.
+  * Requested field lbc_theta is deactivated due to packages, or is a scratch variable.
+ 
+Parsing run-time I/O configuration from streams.atmosphere ...
+ 
+ -----  found immutable stream "input" in streams.atmosphere  -----
+         filename template:  x1.40962.grid.nc
+         filename interval:  none
+         direction:          input
+         reference time:     initial_time
+         record interval:    -
+         input alarm:        initial_only
+ 
+ -----  found immutable stream "restart" in streams.atmosphere  -----
+         filename template:  2.restart.$Y-$M-$D_$h.$m.$s.nc
+         filename interval:  01:00:00
+         direction:          input, output
+         reference time:     initial_time
+         record interval:    -
+         input alarm:        initial_only
+         output alarm:       01:00:00
+ 
+ -----  found immutable stream "iau" in streams.atmosphere  -----
+         filename template:  x1.40962.AmB.$Y-$M-$D_$h.$m.$s.nc
+         filename interval:  none
+         direction:          input
+         reference time:     initial_time
+         record interval:    -
+         input alarm:        initial_only
+         package:            iau
+
+ 
+ -----  found immutable stream "lbc_in" in streams.atmosphere  -----
+         filename template:  lbc.$Y-$M-$D_$h.$m.$s.nc
+         filename interval:  3:00:00
+         direction:          input
+         reference time:     initial_time
+         record interval:    -
+         input alarm:        3:00:00
+         package:            limited_area
+
+ 
+ -----  found stream "output" in streams.atmosphere  -----
+         filename template:  3.history.$Y-$M-$D_$h.$m.$s.nc
+         filename interval:  1:00:00
+         direction:          output
+         reference time:     initial_time
+         record interval:    -
+         output alarm:       1:00:00
+ 
+ -----  found stream "diagnostics" in streams.atmosphere  -----
+         filename template:  3.diag.$Y-$M-$D_$h.$m.$s.nc
+         filename interval:  1:00:00
+         direction:          output
+         reference time:     initial_time
+         record interval:    -
+         output alarm:       1:00:00
+ 
+ -----  found stream "surface" in streams.atmosphere  -----
+         filename template:  x1.40962.sfc_update.nc
+         filename interval:  none
+         direction:          input
+         reference time:     initial_time
+         record interval:    -
+         input alarm:        none
+ 
+ ----- done parsing run-time I/O from streams.atmosphere -----
+
+  ** Validating streams
+ 
+ 
+ Reading dimensions from input streams ...
+ 
+ ----- reading dimensions from stream 'input' using file x1.40962.grid.nc
+        nVertLevels = 1
+        nCells = 40962
+        nEdges = 122880
+        nVertices = 81920
+        TWO = 2
+        maxEdges = 10
+        maxEdges2 = 20
+        R3 *** not found in stream ***
+        vertexDegree = 3
+        nVertLevelsP1 *** not found in stream ***
+        FIFTEEN *** not found in stream ***
+        nMonths *** not found in stream ***
+        nSoilLevels *** not found in stream ***
+ 
+ ----- reading dimensions from stream 'restart' using file 2.restart.2012-06-11_07.00.00.nc
+        nVertLevels = 55
+CRITICAL ERROR: Dimension nVertLevels was read with an inconsistent value.
+ 
+ -----------------------------------------
+ Total log messages printed:
+    Output messages =                  150
+    Warning messages =                   6
+    Error messages =                     0
+    Critical error messages =            1
+ -----------------------------------------
+ Logging complete.  Closing file at 2020/09/17 10:16:00
