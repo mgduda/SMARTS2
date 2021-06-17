@@ -506,18 +506,27 @@ class TestManager:
         results_f.write('Results of SMARTS test {0}\n'.format(self.run_directory))
         results_f.write('\n')
         for test in loaded_tests:
-            results_f.write(''+test.test_launch_name+
-                            ' - '+test.result.result+
-                            ' - "'+test.result.msg+'"\n')
+            # Remove NoneTypes from any test results (we'll assume a None Type is a test running
+            # into an runtime error that the test did not catch/handle).
+            if test.result.result is None:
+                test.result.result = "ERROR"
+
+            if test.result.msg is None:
+                test.result.msg = "ERROR - SMARTS: THIS TEST RETURNED NO RESULT MESSAGE"
+
+            # Short write of test result
+            results_f.write('{0} - {1} - {2}\n'.format(test.test_launch_name,
+                                                       test.result.result,
+                                                       test.result.msg))
         results_f.write('\n')
 
         for test in loaded_tests:
             #
             # Write out results to the terminal
             #
-            print(' - ', test.test_launch_name,
-                  ' - ', test.result.result,
-                  ' - "', test.result.msg, '"', sep='')
+            print(' - {0} - {1} - {2}'.format(test.test_launch_name,
+                                              test.result.result,
+                                              test.result.msg))
 
             #
             # Attempt to wrap lines to be ~79 characters
@@ -527,7 +536,7 @@ class TestManager:
             test_description = textwrap.fill(test.test.test_description, 66)
             result_msg = textwrap.fill(test.result.msg, 69)
             #
-            # Write out results to the result file
+            # Write out results to the result file (long results)
             #
             results_f.write("========================================================\n")
             results_f.writelines('Test: {0} - {1}\n'.format(test_name, test_launch_name))
