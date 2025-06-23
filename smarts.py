@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import argparse
+from smarts.config import CommandLineConfig, SmartsCFConfig, SmartsConfig, SmartscfType
 from smarts.env import Environment
 from smarts.testManager import TestManager
 
@@ -70,6 +71,7 @@ def setup_smarts(envFile=None, testDir=None, srcDir=None):
     smarts TestManager - Will fail if any of the above files or directories
     do not exist """
 
+    print(testDir)
     if not os.path.isfile(envFile):
         print("ERROR: The environment.yaml file does not exist!")
         print("ERROR: Was it specified correctly?")
@@ -100,10 +102,8 @@ def list_cmd(args):
     """ SMARTS Command Line API for handling the list command passed in to
     the argparser. """
 
-    testDir = args.dir[0]
-    testDir = os.path.abspath(testDir) # Convert relative path into an absolute path
-    envFile = args.env[0]
-    envFile = os.path.abspath(envFile)
+    testDir = args.config.test_dir
+    envFile = args.config.env_file
 
     env, test_handler = setup_smarts(envFile, testDir)
 
@@ -140,65 +140,34 @@ def list_cmd(args):
 def run_cmd(args):
     """ SMARTS Command Line API for handling the run command passed in to
     the argparser. """
-    testDir = args.dir[0] # The directory that contains each test
-    srcDir = args.src[0]  # The directory that contains the code to be tested
-    envFile = args.env[0] # The environment.yaml file
+    testDir = args.config.test_dir
+    srcDir = args.config.test_dir
+    envFile = args.config.env_file
     tests = list(set(args.items))
 
-    env, test_handler = setup_smarts(envFile, testDir, srcDir)
+    env, test_handler = setup_smarts(envFile=envFile, testDir=testDir, srcDir=srcDir)
     test_handler.run_tests(tests, env)
 
     return 0
 
 
 if __name__ == "__main__":
-    """ SMARTs Command Line Argument Parsing """
-
-    parser = argparse.ArgumentParser(prog="smarts",
+    parser = argparse.ArgumentParser(prog="SMARTS",
                                      description="A regression testing system for MPAS",
-                                     epilog=None
-                                    )
+                                     epilog=None)
 
-    required = parser.add_argument_group('Required arguments')
-    optional = parser.add_argument_group('Optional arguments')
 
-    required.add_argument('-e', '--env-file',
-                        dest='env',
-                        help='The location of the env.yaml file',
-                        metavar='env.yaml',
-                        default=None,
-                        nargs=1)
-    required.add_argument('-s', '--src-dir',
-                        dest='src',
-                        help='The directory that holds the code to test changes (MPAS-Model)',
-                        metavar='dir',
-                        default=None,
-                        nargs=1)
-    required.add_argument('-t', '--test-dir',
-                        dest='dir',
-                        help='The location of the test directory',
-                        metavar='dir',
-                        default=None,
-                        nargs=1)
-
-    optional.add_argument('-v', '--verbose',
-                        dest='verbose',
-                        help="Output debug level",
-                        type=int,
-                        metavar='level',
-                        default=0,
-                        nargs=1)
-
+    config = SmartsConfig(parser)
 
     subparsers = parser.add_subparsers(dest='command',
-                                       description='command description',
-                                       help='Sub-command help message')
+                            description='command description',
+                            help='Sub-command help message')
 
     # List subcommand
     listParser = subparsers.add_parser('list',
-                                       help="List SMART's tests, test suites and compilers",
-                                       description='Description for list sub-command',
-                                       epilog='Epilog for list sub-command')
+                                    help="List SMART's tests, test suites and compilers",
+                                    description='Description for list sub-command',
+                                    epilog='Epilog for list sub-command')
     listParser.add_argument('items',
                             help='List items help message',
                             nargs='+')
@@ -206,46 +175,41 @@ if __name__ == "__main__":
 
     # Run subcommand
     runParser = subparsers.add_parser('run',
-                                      help="Run a test or a test-suite by name",
-                                      description='Description for run sub-command',
-                                      epilog='Epilog for run sub-command')
+                                    help="Run a test or a test-suite by name",
+                                    description='Description for run sub-command',
+                                    epilog='Epilog for run sub-command')
     runParser.add_argument('items',
-                           help='Run items help message',
-                           nargs='+')
+                        help='Run items help message',
+                        nargs='+')
     runParser.set_defaults(func=run_cmd)
 
     args = parser.parse_args()
     args.parser = parser
     args.listParser = listParser
     args.runParser = runParser
+    args.config = config
 
-    if not args.command: # If there no commands were passed in print help message
+    if args.command is None:
         parser.print_help()
         sys.exit(-1)
-    if args.command == 'run' and args.src is None:
-        parser.print_usage()
-        print("ERROR: Please provide a src directory: -s dir, --src-dir dir")
+
+    try:
+        args.config.test_dir
+    except ValueError as ve:
+        parser.print_help()
         sys.exit(-1)
-    elif args.command == 'run' and args.env is None:
-        parser.print_usage()
-        print("ERROR: Please provide a environment file: -e env.yaml, --env-file env.yaml")
-        sys.exit(-1)
-    elif args.command == 'run' and args.dir is None:
-        parser.print_usage()
-        print("ERROR: Please provide a test directory: -t dir, --test-dir dir")
+    
+    try:
+        args.config.src_dir
+    except ValueError as ve:
+        parser.print_help()
         sys.exit(-1)
 
-    if args.command == 'list' and args.dir is None:
-        parser.print_usage()
-        print("ERROR: Please provide a test directory -t dir, --test-dir dir")
-        sys.exit(-1)
-    elif args.command == 'list' and args.env is None:
-        parser.print_usage()
-        print("ERROR: Please provide a environment file: -e env.yaml, --env-file env.yaml")
+    try:
+        args.config.env_file
+    except ValueError as ve:
+        parser.print_help()
         sys.exit(-1)
 
 
-    # In conjuction with the .set_defaults(func=x) command, for both the listParser,
-    # and runParser, the argparser will call the function x, depending on what command
-    # was passed in to the argparser.
     args.func(args)
