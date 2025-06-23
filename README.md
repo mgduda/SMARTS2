@@ -148,6 +148,43 @@ You can use these arguments to help write your tests.
    to the HPC scheduler. If HPC == None, then this
    machine is not an HPC.
 
+# Smarts Config File .smartscf
+
+In the initial version of SMARTS2, the input arguments for running SMARTS are
+almost always the same and relay change between runs. While iterating on tests,
+the user will need to continually and, rather annoying, pass these same arguments
+over and over.
+
+In order to get rid of this annoyance, the user create a SMARTS config file to
+pass these arguments.
+
+This file will look like the following:
+
+```
+[smarts]
+environment = '/path/to/enviornment/file'
+tests_dir = '/path/to/test_dir/'
+source_dir = '/path/to/source_dir'
+verbose = 0
+```
+
+All of the above configurations are optional.
+
+The configuration file should be named `.smartscf` and can be placed in the two
+following locations:
+
+1. Users Directory: `~/.smartscf` 2. The current running/working directory
+`./.smartscf` (i.e. where you run SMARTS)
+
+SMARTS will try and read the configuration from both of these locations *and*
+take in command line arguments. Precedents for options will be taken in the
+following order (1 = highest priority).
+
+1. Command line options
+2. Current working directory .smartscf
+3. User config ~/.smartscf
+
+
 # Planned Features
 
 ## Beta Release - v0.5
